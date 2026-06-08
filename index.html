@@ -212,7 +212,7 @@
           <div class="fld"><label>Type</label><select id="i_type"><option value="steady">Steady</option><option value="variable">Variable</option></select></div>
           <div class="fld" style="width:120px"><label>Typical / mo</label><input id="i_amt" type="number" step="0.01" placeholder="0.00"></div>
           <div class="fld" style="width:120px"><label>Lean month</label><input id="i_lean" type="number" step="0.01" placeholder="slow mo"></div>
-          <div class="fld"><label>Whose</label><select id="i_owner"><option>Me</option><option>Wife</option><option>Shared</option></select></div>
+          <div class="fld"><label>Whose</label><select id="i_owner"><option>Brian</option><option>Katie</option><option>Shared</option></select></div>
           <button class="btn primary" id="i_add">Add</button>
         </div>
         <div id="incNote"></div>
@@ -245,7 +245,7 @@
           <div class="fld" style="width:110px"><label>Cost</label><input id="s_cost" type="number" step="0.01" placeholder="0.00"></div>
           <div class="fld"><label>Billing</label><select id="s_cycle"><option value="monthly">Monthly</option><option value="annual">Yearly</option></select></div>
           <div class="fld"><label>Next charge</label><input id="s_renew" type="date"></div>
-          <div class="fld"><label>Owner</label><select id="s_owner"><option>Me</option><option>Wife</option><option>Shared</option></select></div>
+          <div class="fld"><label>Owner</label><select id="s_owner"><option>Brian</option><option>Katie</option><option>Shared</option></select></div>
           <button class="btn primary" id="s_add">Add</button>
         </div>
         <div id="subInsights"></div>
@@ -365,9 +365,9 @@ const CONFIG = {
 let state = {
   income: [], bills: [], savings: [],
   subscriptions: [
-    {id:uid(), name:'YouTube TV',    cost:82.99, cycle:'monthly', renew:'2026-06-27', owner:'Me', status:'keep'},
-    {id:uid(), name:'YouTube Music', cost:11.99, cycle:'monthly', renew:'2026-06-16', owner:'Me', status:'keep'},
-    {id:uid(), name:'Google One',    cost:1.99,  cycle:'monthly', renew:'2026-06-30', owner:'Me', status:'keep'},
+    {id:uid(), name:'YouTube TV',    cost:82.99, cycle:'monthly', renew:'2026-06-27', owner:'Brian', status:'keep'},
+    {id:uid(), name:'YouTube Music', cost:11.99, cycle:'monthly', renew:'2026-06-16', owner:'Brian', status:'keep'},
+    {id:uid(), name:'Google One',    cost:1.99,  cycle:'monthly', renew:'2026-06-30', owner:'Brian', status:'keep'},
   ],
   debts: [],
   settings: {strategy:'avalanche', extra:0, incomeView:'lean'}
@@ -375,8 +375,10 @@ let state = {
 
 function mergeDefaults(s){
   const m = Object.assign({income:[],bills:[],savings:[],subscriptions:[],debts:[],settings:{}}, s||{});
-  m.income=(m.income||[]).map(i=>({type:'steady',lean:+i.amount||0,...i}));
-  m.bills=m.bills||[]; m.savings=m.savings||[]; m.subscriptions=m.subscriptions||[]; m.debts=m.debts||[];
+  const own = o => o==='Me' ? 'Brian' : (o==='Wife' ? 'Katie' : o);
+  m.income=(m.income||[]).map(i=>({type:'steady',lean:+i.amount||0,...i,owner:own(i.owner)}));
+  m.subscriptions=(m.subscriptions||[]).map(x=>({...x,owner:own(x.owner)}));
+  m.bills=m.bills||[]; m.savings=m.savings||[]; m.debts=m.debts||[];
   m.settings=Object.assign({strategy:'avalanche',extra:0,incomeView:'lean'}, m.settings||{});
   return m;
 }
