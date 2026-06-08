@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3a6b4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<title>Family Finance — Ledger</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4efe4; --paper-2:#efe8da; --card:#fbf8f1;
+    --ink:#1f2722; --ink-soft:#4a5450; --faint:#8b938c;
+    --line:#ddd4c2; --line-strong:#cabfa6;
+    --green:#3a6b4f; --green-soft:#e6efe6; --sage:#9bb89f;
+    --rust:#b1542f; --rust-soft:#f4e2d6; --amber:#a9802b; --slate:#5b6b7a; --save:#3f7d76;
+    --shadow:0 1px 2px rgba(31,39,34,.05),0 8px 24px -12px rgba(31,39,34,.18);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, #fbf6ea 0%, transparent 60%),var(--paper);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 80px}
+  .money{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .brand h1{font-family:"Fraunces",serif;font-weight:500;font-size:34px;line-height:1;margin:0;letter-spacing:-.01em}
+  .brand h1 em{font-style:italic;color:var(--green)}
+  .brand p{margin:6px 0 0;color:var(--faint);font-size:13.5px}
+  .savebadge{font-size:12px;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .scard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;box-shadow:var(--shadow)}
+  .scard .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:600}
+  .scard .val{font-family:"Fraunces",serif;font-size:25px;font-weight:500;margin-top:6px;letter-spacing:-.01em}
+  .scard .sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .scard.accent-green .val{color:var(--green)}
+  .scard.accent-rust .val{color:var(--rust)}
+  .scard.accent-save .val{color:var(--save)}
+
+  .tabs{display:flex;flex-wrap:wrap;background:var(--paper-2);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;margin-bottom:18px}
+  .tabs button{border:0;background:transparent;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink-soft);padding:8px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+  .tabs button.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+  .panel{display:none;animation:fade .35s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .block{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+  .block .head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .block .head h2{font-family:"Fraunces",serif;font-weight:500;font-size:19px;margin:0}
+  .block .head .meta{font-size:13px;color:var(--faint)}
+  .block .body{padding:6px 18px 18px}
+
+  .row{display:grid;grid-template-columns:1.4fr .8fr 1fr 1fr auto;gap:10px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .nm{font-weight:600}
+  .row .nm small{display:block;font-weight:500;color:var(--faint);font-size:12px}
+  .row .amt{font-weight:600}
+  .row .amt small{font-weight:500;color:var(--faint)}
+  .renew{font-size:12.5px}
+  .renew b{font-weight:600}
+  .renew.soon{color:var(--rust)}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:20px;border:1px solid transparent;cursor:pointer;user-select:none}
+  .pill[data-s="keep"]{background:var(--green-soft);color:var(--green);border-color:#cfe0cf}
+  .pill[data-s="review"]{background:#f6eccd;color:var(--amber);border-color:#e7d49b}
+  .pill[data-s="cut"]{background:var(--rust-soft);color:var(--rust);border-color:#e6c4ad;text-decoration:line-through}
+  .owner-tag{font-size:11px;color:var(--faint);background:var(--paper-2);border:1px solid var(--line);padding:2px 7px;border-radius:6px;margin-left:6px}
+  .type-tag{font-size:11px;font-weight:600;color:var(--save);background:#e3efed;border:1px solid #c4ddd8;padding:2px 7px;border-radius:6px;margin-left:6px}
+  .type-tag.steady{color:var(--slate);background:#eef1f3;border-color:#d8dee3}
+  .cat-tag{font-size:11px;color:var(--slate);background:#eef1f3;border:1px solid #d8dee3;padding:2px 7px;border-radius:6px}
+  .rowact{display:flex;gap:6px;justify-content:flex-end}
+  .iconbtn{border:1px solid var(--line);background:var(--card);border-radius:8px;width:36px;height:36px;cursor:pointer;color:var(--ink-soft);font-size:15px;display:grid;place-items:center;transition:.15s}
+  .iconbtn:hover{border-color:var(--line-strong);background:var(--paper-2)}
+  .iconbtn.del:hover{color:var(--rust);border-color:#e6c4ad}
+
+  .addbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:14px;background:var(--paper-2);border:1px dashed var(--line-strong);border-radius:12px;margin-top:6px}
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  input,select{font-family:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 11px;outline:none;transition:.15s}
+  input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+  input::placeholder{color:#b3b0a4}
+  .btn{font-family:inherit;font-weight:600;font-size:14px;border:0;border-radius:10px;padding:9px 16px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .btn.primary{background:var(--ink);color:#f6f1e6}
+  .btn.primary:hover{background:#2c352e}
+  .btn.green{background:var(--green);color:#fff}
+  .btn.green:hover{filter:brightness(1.06)}
+  .btn.sm{font-size:12.5px;padding:7px 12px}
+  .btn.tint{background:#e3efed;color:var(--save);border:1px solid #c4ddd8}
+
+  .insight{display:flex;gap:11px;padding:12px 14px;border-radius:11px;background:var(--paper-2);border:1px solid var(--line);margin-top:10px;font-size:13.5px;color:var(--ink-soft)}
+  .insight .ic{flex:none;font-size:16px;line-height:1.3}
+  .insight b{color:var(--ink)}
+
+  .alloc{display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--paper-2);margin-top:6px}
+  .alloc span{display:block;min-width:2px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:13px}
+  .legend div{display:flex;align-items:center;gap:7px}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .legend b{font-weight:600;margin-left:2px}
+  .freecall{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--green-soft);border:1px solid #cfe0cf}
+  .freecall .big{font-family:"Fraunces",serif;font-size:22px;font-weight:500;color:var(--green)}
+  .freecall .small{font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .viewtog{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+
+  .strat{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .seg{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .seg button{border:0;background:transparent;font-family:inherit;font-weight:600;font-size:13px;padding:7px 13px;border-radius:7px;cursor:pointer;color:var(--ink-soft)}
+  .seg button.active{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .extrabox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+  .extrabox .label{font-size:13px;color:var(--ink-soft)}
+  .extrabox input{width:120px}
+  .result{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .rcard{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .rcard .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:600}
+  .rcard .v{font-family:"Fraunces",serif;font-size:23px;font-weight:500;margin-top:5px}
+  .rcard.win .v{color:var(--green)}
+  .schedule{margin-top:16px}
+  .debtbar{margin:10px 0}
+  .debtbar .t{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .debtbar .t b{font-weight:600}
+  .debtbar .track{height:9px;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+  .debtbar .fill{height:100%;background:linear-gradient(90deg,var(--green),#5a8a6a);border-radius:20px}
+  .warn{background:var(--rust-soft);border:1px solid #e6c4ad;color:#8a3d1f;padding:12px 14px;border-radius:11px;font-size:13.5px;margin-top:12px}
+  .empty{text-align:center;color:var(--faint);padding:26px 10px;font-size:14px}
+  .mort-inputs{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+
+  /* savings goals */
+  .goal{border:1px solid var(--line);border-radius:13px;padding:15px 16px;margin-bottom:12px;background:var(--card)}
+  .goal.ef{border-color:#c4ddd8;background:linear-gradient(180deg,#f0f7f5,var(--card))}
+  .goal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .goal-name{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px}
+  .goal-fig{font-family:"Fraunces",serif;font-size:18px;font-weight:500;white-space:nowrap}
+  .goal-fig small{color:var(--faint);font-weight:400;font-size:13px}
+  .gtrack{height:11px;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;overflow:hidden;margin:11px 0 8px}
+  .gfill{height:100%;background:linear-gradient(90deg,var(--save),#5fa39a);border-radius:20px;transition:width .4s}
+  .gfill.done{background:linear-gradient(90deg,var(--green),#5a8a6a)}
+  .goal-meta{font-size:12.5px;color:var(--ink-soft)}
+  .goal-meta b{color:var(--ink)}
+  .goal-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
+  .goal-actions input{width:110px}
+  .ef-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+
+  footer{text-align:center;color:var(--faint);font-size:12px;margin-top:30px}
+
+  .authbtn{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s}
+  .authbtn:hover{background:var(--paper-2)}
+  .authrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .whoami{font-size:12px;color:var(--faint)}
+
+  @media(max-width:780px){
+    .summary{grid-template-columns:repeat(2,1fr)}
+    .row{grid-template-columns:1fr auto;grid-row-gap:8px}
+    .row .renew{grid-column:1/2}.row .statuswrap{grid-column:1/2}
+    .row .rowact{grid-column:2/3;grid-row:1/3;align-self:start}
+    .result{grid-template-columns:1fr}
+  }
+  @media(max-width:600px){
+    .wrap{padding:18px 13px 70px}
+    .brand h1{font-size:28px}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tabs button{flex:0 0 auto;padding:9px 13px}
+    .addbar{flex-direction:column;align-items:stretch;gap:11px}
+    .addbar .fld{width:100%!important;flex:1 1 100%!important}
+    .addbar input,.addbar select{width:100%!important}
+    .addbar .btn{width:100%}
+    .scard .val{font-size:22px}
+    .goal-actions input{flex:1;width:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand"><h1>The <em>Household</em> Ledger</h1><p>Income, bills, savings, and a plan to kill the debt.</p></div>
+    <div class="authrow">
+      <span class="whoami" id="whoami"></span>
+      <button class="authbtn" id="authBtn" style="display:none"></button>
+      <div class="savebadge"><span class="dot" id="saveDot"></span><span id="saveState">Saved automatically</span></div>
+    </div>
+  </header>
+
+  <section class="summary" id="summary"></section>
+
+  <div class="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="subs">Subscriptions</button>
+    <button data-tab="bills">Bills</button>
+    <button data-tab="savings">Savings</button>
+    <button data-tab="debt">Debt Payoff</button>
+    <button data-tab="mortgage">Mortgage</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="panel active" id="panel-overview">
+    <div class="block">
+      <div class="head"><h2>Monthly income</h2><div class="meta" id="incMeta"></div></div>
+      <div class="body">
+        <div id="incList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:140px"><label>Source</label><input id="i_name" placeholder="Mechanical Temp, paycheck…"></div>
+          <div class="fld"><label>Type</label><select id="i_type"><option value="steady">Steady</option><option value="variable">Variable</option></select></div>
+          <div class="fld" style="width:120px"><label>Typical / mo</label><input id="i_amt" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld" style="width:120px"><label>Lean month</label><input id="i_lean" type="number" step="0.01" placeholder="slow mo"></div>
+          <div class="fld"><label>Whose</label><select id="i_owner"><option>Me</option><option>Wife</option><option>Shared</option></select></div>
+          <button class="btn primary" id="i_add">Add</button>
+        </div>
+        <div id="incNote"></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="head"><h2>Where the money goes</h2><div class="meta" id="flowMeta"></div></div>
+      <div class="body">
+        <div class="viewtog">
+          <span style="font-size:13px;color:var(--ink-soft)">Budget against a:</span>
+          <div class="seg" id="viewSeg">
+            <button data-view="lean" class="active">Lean month</button>
+            <button data-view="typical">Typical month</button>
+          </div>
+        </div>
+        <div id="cashflow"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBSCRIPTIONS -->
+  <section class="panel" id="panel-subs">
+    <div class="block">
+      <div class="head"><h2>Recurring subscriptions</h2><div class="meta" id="subMeta"></div></div>
+      <div class="body">
+        <div id="subList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:150px"><label>Service</label><input id="s_name" placeholder="e.g. Netflix"></div>
+          <div class="fld" style="width:110px"><label>Cost</label><input id="s_cost" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld"><label>Billing</label><select id="s_cycle"><option value="monthly">Monthly</option><option value="annual">Yearly</option></select></div>
+          <div class="fld"><label>Next charge</label><input id="s_renew" type="date"></div>
+          <div class="fld"><label>Owner</label><select id="s_owner"><option>Me</option><option>Wife</option><option>Shared</option></select></div>
+          <button class="btn primary" id="s_add">Add</button>
+        </div>
+        <div id="subInsights"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BILLS -->
+  <section class="panel" id="panel-bills">
+    <div class="block">
+      <div class="head"><h2>Bills &amp; fixed expenses</h2><div class="meta" id="billMeta"></div></div>
+      <div class="body">
+        <div id="billList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:150px"><label>Expense</label><input id="b_name" placeholder="Mortgage, electric, insurance"></div>
+          <div class="fld" style="width:110px"><label>Amount</label><input id="b_amt" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld"><label>Billing</label><select id="b_cycle"><option value="monthly">Monthly</option><option value="annual">Yearly</option></select></div>
+          <div class="fld"><label>Category</label><select id="b_cat"><option>Housing</option><option>Utilities</option><option>Insurance</option><option>Transportation</option><option>Groceries</option><option>Phone &amp; Internet</option><option>Healthcare</option><option>Childcare</option><option>Other</option></select></div>
+          <button class="btn primary" id="b_add">Add</button>
+        </div>
+        <div id="billInsights"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAVINGS -->
+  <section class="panel" id="panel-savings">
+    <div class="block">
+      <div class="head"><h2>Savings &amp; goals</h2><div class="meta" id="saveMeta"></div></div>
+      <div class="body">
+        <div id="goalList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:150px"><label>Goal</label><input id="g_name" placeholder="Emergency fund, new HVAC van…"></div>
+          <div class="fld" style="width:120px"><label>Target</label><input id="g_target" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld" style="width:120px"><label>Saved so far</label><input id="g_saved" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld" style="width:110px"><label>Per month</label><input id="g_monthly" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld"><label>Type</label><select id="g_ef"><option value="no">Goal</option><option value="yes">Emergency fund</option></select></div>
+          <button class="btn primary" id="g_add">Add</button>
+        </div>
+        <div id="saveInsights"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEBT -->
+  <section class="panel" id="panel-debt">
+    <div class="block">
+      <div class="head"><h2>Debts</h2><div class="meta" id="debtMeta"></div></div>
+      <div class="body">
+        <div id="debtList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:140px"><label>Account</label><input id="d_name" placeholder="e.g. Visa, Car loan"></div>
+          <div class="fld" style="width:120px"><label>Balance</label><input id="d_bal" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="fld" style="width:90px"><label>APR %</label><input id="d_apr" type="number" step="0.01" placeholder="0.0"></div>
+          <div class="fld" style="width:120px"><label>Min / mo</label><input id="d_min" type="number" step="0.01" placeholder="0.00"></div>
+          <button class="btn primary" id="d_add">Add</button>
+        </div>
+        <div class="insight"><span class="ic">🏠</span><div>Leave your <b>mortgage out of here</b> — it lives on the Mortgage tab so it doesn't drown out the cards you can knock out this year.</div></div>
+      </div>
+    </div>
+    <div class="block" id="planBlock">
+      <div class="head"><h2>Payoff plan</h2><div class="strat"><div class="seg" id="stratSeg"><button data-strat="avalanche" class="active">Avalanche</button><button data-strat="snowball">Snowball</button></div></div></div>
+      <div class="body">
+        <div class="extrabox">
+          <span class="label">Extra toward debt each month</span>
+          <span class="money">$</span><input id="extra" type="number" step="1" value="0">
+          <button class="btn green sm" id="applyCut">Apply cut subs →</button>
+          <button class="btn green sm" id="applyFree">Apply free cash →</button>
+        </div>
+        <div id="stratHint" class="insight" style="margin-top:4px"></div>
+        <div id="debtResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MORTGAGE -->
+  <section class="panel" id="panel-mortgage">
+    <div class="block">
+      <div class="head"><h2>Pay off the house early</h2><div class="meta">Kept separate from the card plan</div></div>
+      <div class="body">
+        <div class="mort-inputs">
+          <div class="fld" style="width:140px"><label>Balance owed</label><input id="m_bal" type="number" step="0.01" placeholder="250000"></div>
+          <div class="fld" style="width:90px"><label>Rate %</label><input id="m_apr" type="number" step="0.01" placeholder="6.5"></div>
+          <div class="fld" style="width:150px"><label>Principal + interest / mo</label><input id="m_pay" type="number" step="0.01" placeholder="1580"></div>
+          <div class="fld" style="width:140px"><label>Extra principal / mo</label><input id="m_extra" type="number" step="0.01" placeholder="0"></div>
+        </div>
+        <div class="insight"><span class="ic">💡</span><div>Use your <b>principal &amp; interest only</b> here — not the full escrow payment. Taxes and insurance don't pay down the loan, so keep those on Bills.</div></div>
+        <div id="mortResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Stored privately in this app's data — nothing leaves your browser. Built for the Estes household.</footer>
+</div>
+
+<script>
+const fmt = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+const fmt0 = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const uid = ()=>Math.random().toString(36).slice(2,9);
+const KEY='mt-household-finance-v1';
+
+/* ============================================================
+   SYNC CONFIG — fill these in to see your data from anywhere.
+   1. Host this single file on GitHub Pages (like your Bookkeeper).
+   2. Create a Supabase project, run the SQL I gave you.
+   3. Paste your Project URL + anon key below.
+   4. Put both Google emails (you + wife) in ALLOWED_EMAILS.
+   Leave URL/KEY blank to keep running locally on this device.
+   ============================================================ */
+const CONFIG = {
+  SUPABASE_URL: '',          // e.g. 'https://abcd1234.supabase.co'
+  SUPABASE_ANON_KEY: '',     // the anon / public key
+  HOUSEHOLD_ID: 'estes',     // shared row both of you read/write
+  ALLOWED_EMAILS: []         // e.g. ['brian@mechanicaltemp.com','wife@gmail.com']
+};
+
+let state = {
+  income: [], bills: [], savings: [],
+  subscriptions: [
+    {id:uid(), name:'YouTube TV',    cost:82.99, cycle:'monthly', renew:'2026-06-27', owner:'Me', status:'keep'},
+    {id:uid(), name:'YouTube Music', cost:11.99, cycle:'monthly', renew:'2026-06-16', owner:'Me', status:'keep'},
+    {id:uid(), name:'Google One',    cost:1.99,  cycle:'monthly', renew:'2026-06-30', owner:'Me', status:'keep'},
+  ],
+  debts: [],
+  settings: {strategy:'avalanche', extra:0, incomeView:'lean'}
+};
+
+function mergeDefaults(s){
+  const m = Object.assign({income:[],bills:[],savings:[],subscriptions:[],debts:[],settings:{}}, s||{});
+  m.income=(m.income||[]).map(i=>({type:'steady',lean:+i.amount||0,...i}));
+  m.bills=m.bills||[]; m.savings=m.savings||[]; m.subscriptions=m.subscriptions||[]; m.debts=m.debts||[];
+  m.settings=Object.assign({strategy:'avalanche',extra:0,incomeView:'lean'}, m.settings||{});
+  return m;
+}
+
+/* ---------- backend (Supabase → window.storage → localStorage) ---------- */
+let sb=null, sbUser=null, suppressRealtime=false, saveTimer;
+const sbReady = ()=> !!(sb && sbUser && emailAllowed(sbUser.email));
+const emailAllowed = e => !CONFIG.ALLOWED_EMAILS.length || CONFIG.ALLOWED_EMAILS.map(x=>x.toLowerCase()).includes((e||'').toLowerCase());
+
+async function initBackend(){
+  if(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && window.supabase){
+    try{
+      sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      const { data:{ session } } = await sb.auth.getSession();
+      sbUser = session?.user || null;
+      sb.auth.onAuthStateChange(async (_e, s)=>{ sbUser=s?.user||null; updateAuthUI(); if(sbReady()){ await loadFromBackend(); subscribeRealtime(); renderAll(); renderMortgage(); } });
+    }catch(e){ sb=null; sbUser=null; }
+  }
+  updateAuthUI();
+}
+function setMode(m){
+  const dot=document.getElementById('saveDot'), el=document.getElementById('saveState'); if(!el)return;
+  const map={cloud:['Synced across devices','var(--green)'],local:['Saved on this device','var(--faint)'],signin:['Sign in to sync','var(--amber)'],denied:['This account has no access','var(--rust)']};
+  const [t,c]=map[m]||map.local; el.textContent=t; if(dot) dot.style.background=c;
+}
+function updateAuthUI(){
+  const btn=document.getElementById('authBtn'), who=document.getElementById('whoami'); if(!btn)return;
+  if(!sb){ btn.style.display='none'; who.textContent=''; setMode('local'); return; }
+  if(sbUser){
+    btn.style.display=''; btn.textContent='Sign out';
+    who.textContent = emailAllowed(sbUser.email) ? sbUser.email : sbUser.email+' · no access';
+    btn.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+    setMode(emailAllowed(sbUser.email)?'cloud':'denied');
+  }else{
+    btn.style.display=''; btn.textContent='Sign in to sync'; who.textContent='';
+    btn.onclick=()=> sb.auth.signInWithOAuth({provider:'google', options:{redirectTo:location.href.split('#')[0]}});
+    setMode('signin');
+  }
+}
+async function loadFromBackend(){
+  try{
+    const {data,error}=await sb.from('household_finance').select('data').eq('id',CONFIG.HOUSEHOLD_ID).maybeSingle();
+    if(!error && data && data.data && Object.keys(data.data).length) state=mergeDefaults(data.data);
+  }catch(e){}
+}
+function subscribeRealtime(){
+  if(!sbReady())return;
+  try{
+    sb.channel('hf-'+CONFIG.HOUSEHOLD_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'household_finance',filter:'id=eq.'+CONFIG.HOUSEHOLD_ID}, payload=>{
+        const row=payload.new; if(!row||!row.data) return;
+        if(suppressRealtime || row.updated_by===sbUser.email) return;
+        state=mergeDefaults(row.data); renderAll(); renderMortgage(); flashSave('Updated from another device');
+      }).subscribe();
+  }catch(e){}
+}
+async function load(){
+  if(sbReady()){ await loadFromBackend(); return; }
+  try{ if(window.storage){ const r=await window.storage.get(KEY); if(r&&r.value) state=mergeDefaults(JSON.parse(r.value)); return; } }catch(e){}
+  try{ const v=localStorage.getItem(KEY); if(v) state=mergeDefaults(JSON.parse(v)); }catch(e){}
+}
+function save(){ flashSave('Saving…'); clearTimeout(saveTimer); saveTimer=setTimeout(persist,250); }
+async function persist(){
+  try{
+    if(sbReady()){
+      suppressRealtime=true;
+      const {error}=await sb.from('household_finance').upsert({id:CONFIG.HOUSEHOLD_ID, data:state, updated_at:new Date().toISOString(), updated_by:sbUser.email});
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+      flashSave(error?'Sync failed — saved on device':'Synced across devices');
+      setTimeout(()=>{ suppressRealtime=false; },900);
+      return;
+    }
+    if(window.storage){ await window.storage.set(KEY, JSON.stringify(state)); flashSave('Saved on this device'); return; }
+    localStorage.setItem(KEY, JSON.stringify(state)); flashSave('Saved on this device');
+  }catch(e){ flashSave('Save failed — try again'); }
+}
+function flashSave(t){ const el=document.getElementById('saveState'); if(el) el.textContent=t; }
+
+const monthlyOf = x => x.cycle==='annual' ? x.cost/12 : x.cost;
+const annualOf  = x => x.cycle==='annual' ? x.cost : x.cost*12;
+const incFor = view => state.income.reduce((a,i)=>a+(i.type==='variable'?(view==='lean'?(+i.lean||0):(+i.amount||0)):(+i.amount||0)),0);
+const incomeView = ()=> state.settings.incomeView||'lean';
+const billsMonthly = ()=> state.bills.reduce((a,b)=>a+monthlyOf(b),0);
+const subMonthlyTotal = ()=> state.subscriptions.reduce((a,s)=>a+monthlyOf(s),0);
+const cutMonthly = ()=> state.subscriptions.filter(s=>s.status==='cut').reduce((a,s)=>a+monthlyOf(s),0);
+const debtTotal = ()=> state.debts.reduce((a,d)=>a+(+d.balance||0),0);
+const debtMinTotal = ()=> state.debts.reduce((a,d)=>a+(+d.minPayment||0),0);
+const savingsMonthly = ()=> state.savings.reduce((a,g)=>a+(+g.monthly||0),0);
+const essentialsMonthly = ()=> billsMonthly()+debtMinTotal();
+const freeCash = view => incFor(view||incomeView()) - billsMonthly() - subMonthlyTotal() - debtMinTotal() - savingsMonthly();
+const hasVariable = ()=> state.income.some(i=>i.type==='variable');
+
+function daysUntil(dstr){ if(!dstr)return null; const d=new Date(dstr+'T00:00:00'); const n=new Date();n.setHours(0,0,0,0); return Math.round((d-n)/86400000); }
+function renewText(s){ const n=daysUntil(s.renew); if(n===null)return{txt:'—',soon:false}; const ds=new Date(s.renew+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); if(n<0)return{txt:`Renewed ${ds}`,soon:false}; if(n===0)return{txt:`Charges today (${ds})`,soon:true}; return{txt:`${ds} · in ${n} day${n===1?'':'s'}`,soon:n<=7}; }
+
+function simulate(debts, extra, strategy){
+  if(!debts.length) return null;
+  let ds = debts.map(d=>({name:d.name,balance:+d.balance||0,apr:+d.apr||0,min:+d.minPayment||0}));
+  const totalMin = ds.reduce((a,d)=>a+d.min,0); let month=0,totalInterest=0; const MAX=1200; const base=+extra||0;
+  while(ds.some(d=>d.balance>0.005) && month<MAX){
+    month++;
+    ds.forEach(d=>{ if(d.balance>0.005){const i=d.balance*(d.apr/100/12);d.balance+=i;totalInterest+=i;} });
+    let budget=totalMin+base;
+    let active=ds.filter(d=>d.balance>0.005).sort((a,b)=> strategy==='snowball'?a.balance-b.balance:b.apr-a.apr);
+    active.forEach(d=>{const p=Math.min(d.min,d.balance);d.balance-=p;budget-=p;});
+    for(const d of active){ if(budget<=0.005)break; const p=Math.min(budget,d.balance);d.balance-=p;budget-=p; }
+  }
+  return {months:month,totalInterest,never:(month>=MAX && ds.some(d=>d.balance>0.005))};
+}
+function baselineMinOnly(debts){ let totalInterest=0,maxM=0; debts.forEach(d=>{ let bal=+d.balance||0;const r=(+d.apr||0)/100/12;const pay=+d.minPayment||0;let m=0; while(bal>0.005&&m<1200){m++;const i=bal*r;bal+=i;totalInterest+=i;bal-=Math.min(pay,bal);} maxM=Math.max(maxM,m); }); return {months:maxM,totalInterest}; }
+function simMortgage(bal,apr,payment,extra){ bal=+bal||0; const r=(+apr||0)/100/12; const pay=(+payment||0)+(+extra||0); if(bal<=0||pay<=0)return null; let m=0,interest=0; const MAX=1200; while(bal>0.005&&m<MAX){m++;const i=bal*r;interest+=i;bal+=i;bal-=Math.min(pay,bal);} return {months:m,interest,never:(m>=MAX&&bal>0.005)}; }
+function payoffDate(months){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+months);return d.toLocaleDateString('en-US',{month:'short',year:'numeric'});}
+function dur(months){const y=Math.floor(months/12),m=months%12;return ((y?`${y} yr `:'')+(m?`${m} mo`:(y?'':'0 mo'))).trim();}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function listManager(arr, build, emptyMsg, target){ const el=document.getElementById(target); el.innerHTML = arr.length ? arr.map(build).join('') : `<div class="empty">${emptyMsg}</div>`; }
+
+function renderSummary(){
+  const view=incomeView(), inc=incFor(view), free=freeCash(view);
+  const sav=state.savings.reduce((a,g)=>a+(+g.saved||0),0);
+  const sim = state.debts.length ? simulate(state.debts, state.settings.extra, state.settings.strategy):null;
+  const freeText = sim ? (sim.never?'Needs more':payoffDate(sim.months)):'—';
+  document.getElementById('summary').innerHTML = `
+    <div class="scard accent-green"><div class="lab">Income (${view})</div><div class="val money">${fmt0.format(inc)}</div><div class="sub">${hasVariable()?'typical '+fmt0.format(incFor('typical')):(state.income.length?state.income.length+' source'+(state.income.length===1?'':'s'):'add income')}</div></div>
+    <div class="scard accent-save"><div class="lab">Saved</div><div class="val money">${fmt0.format(sav)}</div><div class="sub">${state.savings.length?state.savings.length+' goal'+(state.savings.length===1?'':'s'):'add a goal'}</div></div>
+    <div class="scard ${free>=0?'accent-green':'accent-rust'}"><div class="lab">Free each month</div><div class="val money">${fmt0.format(free)}</div><div class="sub">after bills, subs, savings &amp; min debt</div></div>
+    <div class="scard accent-rust"><div class="lab">Debt-free by</div><div class="val">${freeText}</div><div class="sub">${fmt0.format(debtTotal())} owed${sim&&!sim.never?' · '+dur(sim.months):''}</div></div>`;
+}
+
+function renderIncome(){
+  listManager(state.income, i=>{
+    const variable=i.type==='variable';
+    return `<div class="row" data-id="${i.id}">
+      <div class="nm">${esc(i.name)}<small>${variable?'irregular':'steady'} income</small></div>
+      <div class="amt money">${fmt.format(+i.amount)}${variable?`<small> typ.</small>`:''}</div>
+      <div class="renew">${variable?`Lean: <b class="money">${fmt.format(+i.lean||0)}</b>`:''}</div>
+      <div class="statuswrap"><span class="type-tag ${variable?'':'steady'}">${variable?'Variable':'Steady'}</span><span class="owner-tag" style="margin-left:6px">${i.owner||'Shared'}</span></div>
+      <div class="rowact"><button class="iconbtn del" data-act="idel" data-id="${i.id}">✕</button></div>
+    </div>`;
+  }, 'No income yet. Add your take-home pay below.', 'incList');
+  document.getElementById('incMeta').textContent = state.income.length? (hasVariable()?`lean ${fmt0.format(incFor('lean'))} · typical ${fmt0.format(incFor('typical'))}`:`${fmt0.format(incFor('typical'))}/mo`):'';
+  const note=document.getElementById('incNote');
+  note.innerHTML = hasVariable()
+    ? `<div class="insight"><span class="ic">📉</span><div><b>Self-employed move:</b> set your <b>lean month</b> to a realistically slow month, then budget against it (toggle below). Cover bills from the lean number; treat anything above it as extra to throw at debt or savings.</div></div>`
+    : '';
+}
+
+function allocBar(view){
+  const inc=incFor(view), bills=billsMonthly(), subs=subMonthlyTotal(), dmin=debtMinTotal(), sav=savingsMonthly(), extra=+state.settings.extra||0;
+  const leftover = inc - bills - subs - dmin - sav - extra;
+  const segs=[
+    {l:'Bills',v:bills,c:'var(--slate)'},
+    {l:'Subscriptions',v:subs,c:'var(--amber)'},
+    {l:'Debt minimums',v:dmin,c:'var(--rust)'},
+    {l:'Savings',v:sav,c:'var(--save)'},
+    {l:'Extra to debt',v:extra,c:'var(--green)'},
+    {l:leftover>=0?'Left over':'Over budget',v:Math.max(leftover,0),c:'var(--sage)'}
+  ];
+  const bar = segs.filter(s=>s.v>0).map(s=>`<span style="flex:${s.v};background:${s.c}" title="${s.l}: ${fmt.format(s.v)}"></span>`).join('');
+  const legend = segs.map(s=>`<div><i style="background:${s.c}"></i>${s.l} <b class="money">${fmt0.format(s.v)}</b></div>`).join('');
+  return {bar,legend,leftover,inc};
+}
+function renderCashflow(){
+  const view=incomeView();
+  document.querySelectorAll('#viewSeg button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  const box=document.getElementById('cashflow');
+  document.getElementById('flowMeta').textContent = incFor(view)?fmt0.format(incFor(view))+' in':'';
+  if(incFor(view)<=0){ box.innerHTML=`<div class="empty">Add monthly income above to see where it goes.</div>`; return; }
+  const {bar,legend} = allocBar(view); const free=freeCash(view);
+  let call;
+  if(free>0) call=`<div class="freecall"><div><div class="big money">${fmt.format(free)} free every month</div><div class="small">After bills, subscriptions, savings and minimum debt payments — this is what you can attack debt or pad savings with.</div></div><button class="btn green" id="cf_apply">Send it all to debt →</button></div>`;
+  else if(free<0) call=`<div class="warn">⚠️ You're <b>${fmt.format(-free)}/mo over</b> in a ${view} month. Trim subscriptions or pause a savings contribution first — the biggest lines are the place to start.</div>`;
+  else call=`<div class="insight"><span class="ic">⚖️</span><div>You're breaking even this ${view} month. Freeing a subscription or bill is the fastest way to make room.</div></div>`;
+  box.innerHTML = `<div class="alloc">${bar}</div><div class="legend">${legend}</div>${call}`;
+  const cf=document.getElementById('cf_apply');
+  if(cf) cf.onclick=()=>{ state.settings.extra=Math.round((state.settings.extra+free)*100)/100; save(); renderAll(); switchTab('debt'); };
+}
+
+function renderSubs(){
+  listManager(state.subscriptions, s=>{ const r=renewText(s);
+    return `<div class="row" data-id="${s.id}">
+      <div class="nm">${esc(s.name)}<small>${s.cycle==='annual'?'Billed yearly':'Billed monthly'}</small></div>
+      <div class="amt money">${fmt.format(s.cost)}<small> /${s.cycle==='annual'?'yr':'mo'}</small></div>
+      <div class="renew ${r.soon?'soon':''}"><b>${r.txt}</b></div>
+      <div class="statuswrap"><span class="pill" data-s="${s.status}" data-act="cycle" data-id="${s.id}">${s.status[0].toUpperCase()+s.status.slice(1)}</span><span class="owner-tag">${s.owner}</span></div>
+      <div class="rowact"><button class="iconbtn del" data-act="del" data-id="${s.id}">✕</button></div>
+    </div>`; }, 'No subscriptions yet. Add your first below.', 'subList');
+  const m=subMonthlyTotal(); document.getElementById('subMeta').textContent = `${fmt.format(m)}/mo · ${fmt0.format(m*12)}/yr`;
+  renderSubInsights();
+}
+function renderSubInsights(){
+  const box=document.getElementById('subInsights'); const out=[]; const cut=cutMonthly();
+  if(cut>0) out.push(`<div class="insight"><span class="ic">💸</span><div>You've flagged <b>${fmt.format(cut)}/mo</b> (${fmt0.format(cut*12)}/yr) to cut. On <b>Debt Payoff</b>, hit "Apply cut subs" to throw it at your debt.</div></div>`);
+  const names=state.subscriptions.map(s=>s.name.toLowerCase());
+  if(names.some(n=>n.includes('youtube tv'))&&names.some(n=>n.includes('youtube music'))) out.push(`<div class="insight"><span class="ic">📺</span><div><b>YouTube overlap:</b> YouTube TV is your biggest line at ${fmt.format(82.99)}/mo. Some plans bundle Music or you may get it via a phone/Premium plan — worth a check.</div></div>`);
+  const big=[...state.subscriptions].sort((a,b)=>monthlyOf(b)-monthlyOf(a))[0];
+  if(big&&monthlyOf(big)>=40) out.push(`<div class="insight"><span class="ic">🔎</span><div><b>Biggest leak:</b> ${esc(big.name)} at ${fmt.format(monthlyOf(big))}/mo is ${fmt0.format(annualOf(big))} a year — review first.</div></div>`);
+  const soon=state.subscriptions.map(s=>({s,n:daysUntil(s.renew)})).filter(x=>x.n!==null&&x.n>=0&&x.n<=7).sort((a,b)=>a.n-b.n);
+  if(soon.length) out.push(`<div class="insight"><span class="ic">⏰</span><div><b>Charging soon:</b> ${soon.map(x=>esc(x.s.name)+(x.n===0?' (today)':` (${x.n}d)`)).join(', ')}. Cancel now if you're not keeping it.</div></div>`);
+  box.innerHTML=out.join('');
+}
+
+function renderBills(){
+  listManager(state.bills, b=>`
+    <div class="row" data-id="${b.id}">
+      <div class="nm">${esc(b.name)}<small>${b.cycle==='annual'?'Billed yearly':'Billed monthly'}</small></div>
+      <div class="amt money">${fmt.format(b.cost)}<small> /${b.cycle==='annual'?'yr':'mo'}</small></div>
+      <div class="renew"><span class="cat-tag">${esc(b.category||'Other')}</span></div>
+      <div class="statuswrap"></div>
+      <div class="rowact"><button class="iconbtn del" data-act="bdel" data-id="${b.id}">✕</button></div>
+    </div>`, 'No bills yet. Add mortgage/rent, utilities, insurance, phone, etc.', 'billList');
+  const m=billsMonthly(); document.getElementById('billMeta').textContent = state.bills.length?`${fmt.format(m)}/mo · ${fmt0.format(m*12)}/yr`:'';
+  const box=document.getElementById('billInsights'); if(!state.bills.length){box.innerHTML='';return;}
+  const cats={}; state.bills.forEach(b=>{cats[b.category||'Other']=(cats[b.category||'Other']||0)+monthlyOf(b);});
+  const top=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  box.innerHTML=`<div class="insight"><span class="ic">📊</span><div><b>By category:</b> ${top.map(([k,v])=>`${esc(k)} ${fmt0.format(v)}`).join(' · ')}</div></div>`;
+}
+
+function renderSavings(){
+  const ess=essentialsMonthly();
+  listManager(state.savings, g=>{
+    const target=+g.target||0, saved=+g.saved||0, pct=target>0?Math.min(100,saved/target*100):0, done=target>0&&saved>=target;
+    const remain=Math.max(0,target-saved);
+    const perMo=+g.monthly||0;
+    const eta = (!done && perMo>0 && remain>0) ? `· ~${Math.ceil(remain/perMo)} mo to go at ${fmt0.format(perMo)}/mo` : (done?'· fully funded 🎉':(perMo>0?'':'· set a monthly amount to project'));
+    const runway = (g.emergency && ess>0) ? ` · covers <b>${(saved/ess).toFixed(1)} months</b> of essentials` : '';
+    const efBtns = g.emergency ? `<div class="ef-quick"><button class="btn tint sm" data-act="ef3" data-id="${g.id}">Target = 3 mo (${fmt0.format(ess*3)})</button><button class="btn tint sm" data-act="ef6" data-id="${g.id}">6 mo (${fmt0.format(ess*6)})</button></div>` : '';
+    return `<div class="goal ${g.emergency?'ef':''}" data-id="${g.id}">
+      <div class="goal-top">
+        <div class="goal-name">${g.emergency?'⛑ ':''}${esc(g.name)}</div>
+        <div class="goal-fig money">${fmt0.format(saved)} <small>/ ${fmt0.format(target)}</small></div>
+      </div>
+      <div class="gtrack"><div class="gfill ${done?'done':''}" style="width:${pct}%"></div></div>
+      <div class="goal-meta"><b>${pct.toFixed(0)}% funded</b> ${eta}${runway}</div>
+      ${efBtns}
+      <div class="goal-actions">
+        <span style="font-size:12.5px;color:var(--ink-soft)">Add deposit</span>
+        <span class="money">$</span><input type="number" step="0.01" placeholder="0.00" data-dep="${g.id}">
+        <button class="btn green sm" data-act="deposit" data-id="${g.id}">Add</button>
+        <button class="iconbtn del" data-act="gdel" data-id="${g.id}" style="margin-left:auto">✕</button>
+      </div>
+    </div>`;
+  }, 'No savings goals yet. Add an emergency fund or a goal below.', 'goalList');
+  const totSaved=state.savings.reduce((a,g)=>a+(+g.saved||0),0);
+  document.getElementById('saveMeta').textContent = state.savings.length?`${fmt0.format(totSaved)} saved · ${fmt0.format(savingsMonthly())}/mo set aside`:'';
+  const box=document.getElementById('saveInsights'); const out=[];
+  const ef=state.savings.find(g=>g.emergency);
+  if(!ef) out.push(`<div class="insight"><span class="ic">⛑</span><div><b>No emergency fund yet.</b> For a one-tech shop with irregular income, aim for <b>3–6 months of essentials</b> (${fmt0.format(ess*3)}–${fmt0.format(ess*6)}). Add one above and tap a quick-target.</div></div>`);
+  else if(ess>0){ const cov=(+ef.saved||0)/ess; out.push(`<div class="insight"><span class="ic">🛟</span><div>Your emergency fund covers <b>${cov.toFixed(1)} months</b> of essentials (${fmt0.format(ess)}/mo). ${cov<3?'Slow seasons and surprise repairs are the whole reason this exists — building toward 3 months first is the priority over extra debt payments.':'Solid cushion — past 3 months you can comfortably tilt more toward killing debt.'}</div></div>`); }
+  box.innerHTML=out.join('');
+}
+
+function renderDebts(){
+  listManager(state.debts, d=>`
+    <div class="row" data-id="${d.id}">
+      <div class="nm">${esc(d.name)}<small>${(+d.apr).toFixed(2)}% APR</small></div>
+      <div class="amt money">${fmt0.format(+d.balance)}</div>
+      <div class="renew">Min <b class="money">${fmt.format(+d.minPayment)}</b>/mo</div>
+      <div class="statuswrap"></div>
+      <div class="rowact"><button class="iconbtn del" data-act="ddel" data-id="${d.id}">✕</button></div>
+    </div>`, 'No debts entered. Add cards or loans below to build a payoff plan.', 'debtList');
+  document.getElementById('debtMeta').textContent = state.debts.length?`${fmt0.format(debtTotal())} across ${state.debts.length}`:'';
+  renderPlan();
+}
+function renderPlan(){
+  document.getElementById('extra').value = state.settings.extra||0;
+  document.querySelectorAll('#stratSeg button').forEach(b=>b.classList.toggle('active', b.dataset.strat===state.settings.strategy));
+  document.getElementById('stratHint').innerHTML = state.settings.strategy==='avalanche'
+    ? `<span class="ic">📐</span><div><b>Avalanche</b> attacks the highest interest rate first — saves the most money overall.</div>`
+    : `<span class="ic">⛄</span><div><b>Snowball</b> clears the smallest balance first — fewer accounts faster, best for momentum.</div>`;
+  const out=document.getElementById('debtResult');
+  if(!state.debts.length){ out.innerHTML=''; document.getElementById('planBlock').style.opacity=.55; return; }
+  document.getElementById('planBlock').style.opacity=1;
+  const plan=simulate(state.debts,state.settings.extra,state.settings.strategy); const base=baselineMinOnly(state.debts);
+  if(plan.never){ out.innerHTML=`<div class="warn">⚠️ At these minimums and APRs, a debt isn't shrinking — interest outpaces the payment. Add extra above, or raise the minimum on the highest-APR account.</div>`+scheduleHTML(); return; }
+  const intSaved=Math.max(0,base.totalInterest-plan.totalInterest), moSaved=Math.max(0,base.months-plan.months);
+  out.innerHTML=`<div class="result">
+    <div class="rcard"><div class="lab">Debt-free in</div><div class="v">${dur(plan.months)}</div><div class="lab" style="text-transform:none;letter-spacing:0;color:var(--ink-soft)">by ${payoffDate(plan.months)}</div></div>
+    <div class="rcard"><div class="lab">Total interest paid</div><div class="v money">${fmt0.format(plan.totalInterest)}</div></div>
+    <div class="rcard win"><div class="lab">vs minimums only</div><div class="v money">${fmt0.format(intSaved)} saved</div><div class="lab" style="text-transform:none;letter-spacing:0;color:var(--ink-soft)">${moSaved} mo sooner</div></div>
+  </div>`+scheduleHTML();
+}
+function scheduleHTML(){
+  const order=[...state.debts].sort((a,b)=> state.settings.strategy==='snowball'?(+a.balance)-(+b.balance):(+b.apr)-(+a.apr));
+  const max=Math.max(...state.debts.map(d=>+d.balance),1);
+  return `<div class="schedule"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:600;margin-bottom:8px">Attack order</div>`+
+    order.map((d,i)=>`<div class="debtbar"><div class="t"><b>${i+1}. ${esc(d.name)}</b><span class="money">${fmt0.format(+d.balance)} · ${(+d.apr).toFixed(1)}%</span></div><div class="track"><div class="fill" style="width:${Math.max(6,(+d.balance/max)*100)}%"></div></div></div>`).join('')+`</div>`;
+}
+function renderMortgage(){
+  const bal=+document.getElementById('m_bal').value, apr=+document.getElementById('m_apr').value, pay=+document.getElementById('m_pay').value, ex=+document.getElementById('m_extra').value;
+  const out=document.getElementById('mortResult'); const plan=simMortgage(bal,apr,pay,ex);
+  if(!plan){ out.innerHTML=`<div class="empty">Enter balance, rate and monthly payment to see your payoff timeline.</div>`; return; }
+  if(plan.never){ out.innerHTML=`<div class="warn">⚠️ That payment doesn't cover the monthly interest, so the balance never falls. Check the rate and payment (principal &amp; interest only).</div>`; return; }
+  const base=simMortgage(bal,apr,pay,0); const intSaved=Math.max(0,base.interest-plan.interest), moSaved=Math.max(0,base.months-plan.months);
+  out.innerHTML=`<div class="result">
+    <div class="rcard"><div class="lab">Paid off in</div><div class="v">${dur(plan.months)}</div><div class="lab" style="text-transform:none;letter-spacing:0;color:var(--ink-soft)">by ${payoffDate(plan.months)}</div></div>
+    <div class="rcard"><div class="lab">Total interest</div><div class="v money">${fmt0.format(plan.interest)}</div></div>
+    <div class="rcard win"><div class="lab">Extra ${fmt0.format(ex)}/mo saves</div><div class="v money">${fmt0.format(intSaved)}</div><div class="lab" style="text-transform:none;letter-spacing:0;color:var(--ink-soft)">${moSaved} mo (${dur(moSaved)}) sooner</div></div>
+  </div>${ex>0?'':'<div class="insight" style="margin-top:14px"><span class="ic">🏁</span><div>Add an <b>extra principal</b> amount to see how much interest and time you cut. But fund the emergency cushion and torch high-APR cards first — they almost always beat prepaying a mortgage.</div></div>'}`;
+}
+
+function renderAll(){ renderSummary(); renderIncome(); renderCashflow(); renderSubs(); renderBills(); renderSavings(); renderDebts(); }
+function switchTab(name){ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===name)); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active'); }
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.querySelectorAll('#viewSeg button').forEach(b=>b.onclick=()=>{ state.settings.incomeView=b.dataset.view; save(); renderSummary(); renderCashflow(); });
+
+/* income */
+document.getElementById('i_add').onclick=()=>{
+  const name=document.getElementById('i_name').value.trim(); const amt=parseFloat(document.getElementById('i_amt').value);
+  if(!name||isNaN(amt))return document.getElementById('i_name').focus();
+  const type=document.getElementById('i_type').value; let lean=parseFloat(document.getElementById('i_lean').value);
+  if(isNaN(lean)) lean=amt; if(type==='steady') lean=amt;
+  state.income.push({id:uid(),name,type,amount:+amt.toFixed(2),lean:+lean.toFixed(2),owner:document.getElementById('i_owner').value});
+  ['i_name','i_amt','i_lean'].forEach(i=>document.getElementById(i).value=''); save(); renderAll();
+};
+document.getElementById('incList').addEventListener('click',e=>{const t=e.target.closest('[data-act="idel"]');if(!t)return;state.income=state.income.filter(i=>i.id!==t.dataset.id);save();renderAll();});
+
+/* subscriptions */
+document.getElementById('s_add').onclick=()=>{
+  const name=document.getElementById('s_name').value.trim(); const cost=parseFloat(document.getElementById('s_cost').value);
+  if(!name||isNaN(cost))return document.getElementById('s_name').focus();
+  state.subscriptions.push({id:uid(),name,cost:+cost.toFixed(2),cycle:document.getElementById('s_cycle').value,renew:document.getElementById('s_renew').value,owner:document.getElementById('s_owner').value,status:'keep'});
+  ['s_name','s_cost','s_renew'].forEach(i=>document.getElementById(i).value=''); save(); renderAll();
+};
+document.getElementById('subList').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const id=t.dataset.id; if(t.dataset.act==='del')state.subscriptions=state.subscriptions.filter(s=>s.id!==id); if(t.dataset.act==='cycle'){const s=state.subscriptions.find(x=>x.id===id);s.status={keep:'review',review:'cut',cut:'keep'}[s.status];} save();renderAll();});
+
+/* bills */
+document.getElementById('b_add').onclick=()=>{
+  const name=document.getElementById('b_name').value.trim(); const cost=parseFloat(document.getElementById('b_amt').value);
+  if(!name||isNaN(cost))return document.getElementById('b_name').focus();
+  state.bills.push({id:uid(),name,cost:+cost.toFixed(2),cycle:document.getElementById('b_cycle').value,category:document.getElementById('b_cat').value});
+  document.getElementById('b_name').value='';document.getElementById('b_amt').value=''; save(); renderAll();
+};
+document.getElementById('billList').addEventListener('click',e=>{const t=e.target.closest('[data-act="bdel"]');if(!t)return;state.bills=state.bills.filter(b=>b.id!==t.dataset.id);save();renderAll();});
+
+/* savings */
+document.getElementById('g_add').onclick=()=>{
+  const name=document.getElementById('g_name').value.trim(); const target=parseFloat(document.getElementById('g_target').value);
+  if(!name||isNaN(target))return document.getElementById('g_name').focus();
+  state.savings.push({id:uid(),name,target:+target.toFixed(2),saved:+(parseFloat(document.getElementById('g_saved').value)||0).toFixed(2),monthly:+(parseFloat(document.getElementById('g_monthly').value)||0).toFixed(2),emergency:document.getElementById('g_ef').value==='yes'});
+  ['g_name','g_target','g_saved','g_monthly'].forEach(i=>document.getElementById(i).value=''); save(); renderAll();
+};
+document.getElementById('goalList').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t)return; const id=t.dataset.id; const g=state.savings.find(x=>x.id===id);
+  if(t.dataset.act==='gdel'){ state.savings=state.savings.filter(x=>x.id!==id); }
+  else if(t.dataset.act==='deposit'){ const inp=document.querySelector(`[data-dep="${id}"]`); const v=parseFloat(inp&&inp.value); if(!isNaN(v)&&v!==0){ g.saved=Math.max(0,+(((+g.saved||0)+v)).toFixed(2)); } }
+  else if(t.dataset.act==='ef3'){ g.target=+(essentialsMonthly()*3).toFixed(2); }
+  else if(t.dataset.act==='ef6'){ g.target=+(essentialsMonthly()*6).toFixed(2); }
+  save(); renderAll();
+});
+
+/* debt */
+document.getElementById('d_add').onclick=()=>{
+  const name=document.getElementById('d_name').value.trim(); const balance=parseFloat(document.getElementById('d_bal').value);
+  const apr=parseFloat(document.getElementById('d_apr').value); const minPayment=parseFloat(document.getElementById('d_min').value);
+  if(!name||isNaN(balance))return document.getElementById('d_name').focus();
+  state.debts.push({id:uid(),name,balance:+balance.toFixed(2),apr:isNaN(apr)?0:apr,minPayment:isNaN(minPayment)?0:minPayment});
+  ['d_name','d_bal','d_apr','d_min'].forEach(i=>document.getElementById(i).value=''); save(); renderAll();
+};
+document.getElementById('debtList').addEventListener('click',e=>{const t=e.target.closest('[data-act="ddel"]');if(!t)return;state.debts=state.debts.filter(d=>d.id!==t.dataset.id);save();renderAll();});
+document.querySelectorAll('#stratSeg button').forEach(b=>b.onclick=()=>{state.settings.strategy=b.dataset.strat;save();renderPlan();renderSummary();});
+document.getElementById('extra').addEventListener('input',e=>{state.settings.extra=Math.max(0,parseFloat(e.target.value)||0);save();renderPlan();renderSummary();renderCashflow();});
+document.getElementById('applyCut').onclick=()=>{ const c=cutMonthly(); if(c<=0)return alert('Mark a subscription as "Cut" first (tap its status pill until it turns red).'); state.settings.extra=Math.round((state.settings.extra+c)*100)/100; save(); renderAll(); };
+document.getElementById('applyFree').onclick=()=>{ const f=freeCash(); if(f<=0)return alert('No free cash right now — add income or trim bills/subscriptions/savings first.'); state.settings.extra=Math.round((state.settings.extra+f)*100)/100; save(); renderAll(); };
+
+/* mortgage */
+['m_bal','m_apr','m_pay','m_extra'].forEach(id=>document.getElementById(id).addEventListener('input',renderMortgage));
+
+(async()=>{ await initBackend(); await load(); renderAll(); renderMortgage(); if(sbReady()) subscribeRealtime(); })();
+</script>
+</body>
+</html>
