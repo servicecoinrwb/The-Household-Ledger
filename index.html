@@ -152,6 +152,8 @@
 
   .authbtn{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s}
   .authbtn:hover{background:var(--paper-2)}
+  .authbtn:disabled{opacity:.6;cursor:default}
+  .authinput{font-size:13px!important;padding:7px 10px!important;width:170px}
   .authrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .whoami{font-size:12px;color:var(--faint)}
 
@@ -183,8 +185,7 @@
   <header class="top">
     <div class="brand"><h1>The <em>Household</em> Ledger</h1><p>Income, bills, savings, and a plan to kill the debt.</p></div>
     <div class="authrow">
-      <span class="whoami" id="whoami"></span>
-      <button class="authbtn" id="authBtn" style="display:none"></button>
+      <div id="authArea" class="authrow"></div>
       <div class="savebadge"><span class="dot" id="saveDot"></span><span id="saveState">Saved automatically</span></div>
     </div>
   </header>
@@ -351,7 +352,7 @@ const KEY='mt-household-finance-v1';
    1. Host this single file on GitHub Pages (like your Bookkeeper).
    2. Create a Supabase project, run the SQL I gave you.
    3. Paste your Project URL + anon key below.
-   4. Put both Google emails (you + wife) in ALLOWED_EMAILS.
+   4. Put both emails (you + wife) in ALLOWED_EMAILS.
    Leave URL/KEY blank to keep running locally on this device.
    ============================================================ */
 const CONFIG = {
@@ -402,18 +403,30 @@ function setMode(m){
   const [t,c]=map[m]||map.local; el.textContent=t; if(dot) dot.style.background=c;
 }
 function updateAuthUI(){
-  const btn=document.getElementById('authBtn'), who=document.getElementById('whoami'); if(!btn)return;
-  if(!sb){ btn.style.display='none'; who.textContent=''; setMode('local'); return; }
+  const area=document.getElementById('authArea'); if(!area) return;
+  if(!sb){ area.innerHTML=''; setMode('local'); return; }
   if(sbUser){
-    btn.style.display=''; btn.textContent='Sign out';
-    who.textContent = emailAllowed(sbUser.email) ? sbUser.email : sbUser.email+' · no access';
-    btn.onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
-    setMode(emailAllowed(sbUser.email)?'cloud':'denied');
+    const ok=emailAllowed(sbUser.email);
+    area.innerHTML=`<span class="whoami">${esc(sbUser.email)}${ok?'':' · no access'}</span><button class="authbtn" id="authBtn">Sign out</button>`;
+    document.getElementById('authBtn').onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+    setMode(ok?'cloud':'denied');
   }else{
-    btn.style.display=''; btn.textContent='Sign in to sync'; who.textContent='';
-    btn.onclick=()=> sb.auth.signInWithOAuth({provider:'google', options:{redirectTo:location.href.split('#')[0]}});
+    area.innerHTML=`<input id="authEmail" class="authinput" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com"><button class="authbtn" id="authBtn">Send link</button>`;
+    document.getElementById('authBtn').onclick=sendMagicLink;
+    document.getElementById('authEmail').addEventListener('keydown',e=>{ if(e.key==='Enter') sendMagicLink(); });
     setMode('signin');
   }
+}
+async function sendMagicLink(){
+  const inp=document.getElementById('authEmail'); const email=(inp&&inp.value||'').trim();
+  if(!email||!email.includes('@')){ inp&&inp.focus(); return; }
+  if(!emailAllowed(email)){ flashSave('That email isn\u2019t on the allow list'); return; }
+  const btn=document.getElementById('authBtn'); btn.disabled=true; btn.textContent='Sending\u2026';
+  try{
+    const {error}=await sb.auth.signInWithOtp({email, options:{emailRedirectTo: location.href.split('#')[0]}});
+    if(error){ btn.disabled=false; btn.textContent='Send link'; flashSave('Couldn\u2019t send \u2014 '+error.message); }
+    else { document.getElementById('authArea').innerHTML=`<span class="whoami">\u2709 Check ${esc(email)} \u2014 tap the link to sign in</span>`; flashSave('Sign-in link sent'); }
+  }catch(e){ btn.disabled=false; btn.textContent='Send link'; flashSave('Couldn\u2019t send the link'); }
 }
 async function loadFromBackend(){
   try{
