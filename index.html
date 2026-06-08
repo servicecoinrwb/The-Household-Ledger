@@ -349,6 +349,14 @@ const fmt0 = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maxi
 const uid = ()=>Math.random().toString(36).slice(2,9);
 const KEY='mt-household-finance-v1';
 
+/* ============================================================
+   SYNC CONFIG — fill these in to see your data from anywhere.
+   1. Host this single file on GitHub Pages (like your Bookkeeper).
+   2. Create a Supabase project, run the SQL I gave you.
+   3. Paste your Project URL + anon key below.
+   4. Put both emails (you + wife) in ALLOWED_EMAILS.
+   Leave URL/KEY blank to keep running locally on this device.
+   ============================================================ */
 const CONFIG = {
   SUPABASE_URL: 'https://tufvkuosrrymgzldlslv.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1ZnZrdW9zcnJ5bWd6bGRsc2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NTI5MjAsImV4cCI6MjA5NjUyODkyMH0.2hG9yCWyFCX0NJyeF4Q7eAe6WpETsjuvW_WQ74KSvmk',
@@ -407,22 +415,23 @@ function updateAuthUI(){
     document.getElementById('authBtn').onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
     setMode(ok?'cloud':'denied');
   }else{
-    area.innerHTML=`<input id="authEmail" class="authinput" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com"><button class="authbtn" id="authBtn">Send link</button>`;
-    document.getElementById('authBtn').onclick=sendMagicLink;
-    document.getElementById('authEmail').addEventListener('keydown',e=>{ if(e.key==='Enter') sendMagicLink(); });
+    area.innerHTML=`<input id="authEmail" class="authinput" type="email" inputmode="email" autocomplete="username" placeholder="email"><input id="authPass" class="authinput" type="password" autocomplete="current-password" placeholder="password" style="width:130px"><button class="authbtn" id="authBtn">Sign in</button>`;
+    document.getElementById('authBtn').onclick=passwordSignIn;
+    document.getElementById('authEmail').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('authPass').focus(); });
+    document.getElementById('authPass').addEventListener('keydown',e=>{ if(e.key==='Enter') passwordSignIn(); });
     setMode('signin');
   }
 }
-async function sendMagicLink(){
-  const inp=document.getElementById('authEmail'); const email=(inp&&inp.value||'').trim();
-  if(!email||!email.includes('@')){ inp&&inp.focus(); return; }
+async function passwordSignIn(){
+  const emailEl=document.getElementById('authEmail'), passEl=document.getElementById('authPass');
+  const email=(emailEl&&emailEl.value||'').trim(), pass=(passEl&&passEl.value)||'';
+  if(!email||!pass){ (email?passEl:emailEl)&&(email?passEl:emailEl).focus(); return; }
   if(!emailAllowed(email)){ flashSave('That email isn\u2019t on the allow list'); return; }
-  const btn=document.getElementById('authBtn'); btn.disabled=true; btn.textContent='Sending\u2026';
+  const btn=document.getElementById('authBtn'); btn.disabled=true; btn.textContent='\u2026';
   try{
-    const {error}=await sb.auth.signInWithOtp({email, options:{emailRedirectTo: location.href.split('#')[0]}});
-    if(error){ btn.disabled=false; btn.textContent='Send link'; flashSave('Couldn\u2019t send \u2014 '+error.message); }
-    else { document.getElementById('authArea').innerHTML=`<span class="whoami">\u2709 Check ${esc(email)} \u2014 tap the link to sign in</span>`; flashSave('Sign-in link sent'); }
-  }catch(e){ btn.disabled=false; btn.textContent='Send link'; flashSave('Couldn\u2019t send the link'); }
+    const {error}=await sb.auth.signInWithPassword({email, password:pass});
+    if(error){ flashSave(/confirm/i.test(error.message)?'Confirm the user in Supabase \u2192 Auth \u2192 Users':'Wrong email or password'); btn.disabled=false; btn.textContent='Sign in'; }
+  }catch(e){ flashSave('Couldn\u2019t sign in'); btn.disabled=false; btn.textContent='Sign in'; }
 }
 async function loadFromBackend(){
   try{
