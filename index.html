@@ -8,6 +8,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Ledger">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CjxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgcng9IjciIGZpbGw9IiMzYTZiNGYiLz4KPHBhdGggZD0iTTE2IDYuMiAyNiAxNS4yIEg2IFoiIGZpbGw9IiNmNGVmZTQiLz4KPHJlY3QgeD0iOC41IiB5PSIxNSIgd2lkdGg9IjE1IiBoZWlnaHQ9IjkuMyIgZmlsbD0iI2Y0ZWZlNCIvPgo8cmVjdCB4PSIxMy43IiB5PSIxOC4yIiB3aWR0aD0iNC42IiBoZWlnaHQ9IjYuMSIgcng9IjAuNiIgZmlsbD0iIzNhNmI0ZiIvPgo8cmVjdCB4PSI5LjgiIHk9IjI1LjMiIHdpZHRoPSIxMi40IiBoZWlnaHQ9IjEuNSIgcng9IjAuNzUiIGZpbGw9IiNhOTgwMmIiLz4KPC9zdmc+">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Family Finance — Ledger</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -347,14 +349,6 @@ const fmt0 = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maxi
 const uid = ()=>Math.random().toString(36).slice(2,9);
 const KEY='mt-household-finance-v1';
 
-/* ============================================================
-   SYNC CONFIG — fill these in to see your data from anywhere.
-   1. Host this single file on GitHub Pages (like your Bookkeeper).
-   2. Create a Supabase project, run the SQL I gave you.
-   3. Paste your Project URL + anon key below.
-   4. Put both emails (you + wife) in ALLOWED_EMAILS.
-   Leave URL/KEY blank to keep running locally on this device.
-   ============================================================ */
 const CONFIG = {
   SUPABASE_URL: 'https://tufvkuosrrymgzldlslv.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1ZnZrdW9zcnJ5bWd6bGRsc2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NTI5MjAsImV4cCI6MjA5NjUyODkyMH0.2hG9yCWyFCX0NJyeF4Q7eAe6WpETsjuvW_WQ74KSvmk',
