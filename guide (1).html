@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3a6b4f">
+<title>The Household Ledger — Guide</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CjxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgcng9IjciIGZpbGw9IiMzYTZiNGYiLz4KPHBhdGggZD0iTTE2IDYuMiAyNiAxNS4yIEg2IFoiIGZpbGw9IiNmNGVmZTQiLz4KPHJlY3QgeD0iOC41IiB5PSIxNSIgd2lkdGg9IjE1IiBoZWlnaHQ9IjkuMyIgZmlsbD0iI2Y0ZWZlNCIvPgo8cmVjdCB4PSIxMy43IiB5PSIxOC4yIiB3aWR0aD0iNC42IiBoZWlnaHQ9IjYuMSIgcng9IjAuNiIgZmlsbD0iIzNhNmI0ZiIvPgo8cmVjdCB4PSI5LjgiIHk9IjI1LjMiIHdpZHRoPSIxMi40IiBoZWlnaHQ9IjEuNSIgcng9IjAuNzUiIGZpbGw9IiNhOTgwMmIiLz4KPC9zdmc+">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4efe4; --paper-2:#efe8da; --card:#fbf8f1;
+    --ink:#1f2722; --ink-soft:#414b46; --faint:#8b938c;
+    --line:#ddd4c2; --line-strong:#cabfa6;
+    --green:#3a6b4f; --green-soft:#e6efe6; --sage:#9bb89f;
+    --rust:#b1542f; --rust-soft:#f4e2d6; --amber:#a9802b; --amber-soft:#f6eccd; --save:#3f7d76; --slate:#5b6b7a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:var(--green);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  .shell{display:flex;max-width:1180px;margin:0 auto;min-height:100vh}
+
+  /* sidebar */
+  .sidebar{width:268px;flex:none;border-right:1px solid var(--line);padding:26px 20px 60px;position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(180deg,#fbf6ea,var(--paper))}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:4px}
+  .brand .mark{width:34px;height:34px;border-radius:8px;flex:none}
+  .brand .t{font-family:"Fraunces",serif;font-weight:500;font-size:17px;line-height:1.15}
+  .brand .t em{font-style:italic;color:var(--green)}
+  .brand .t span{display:block;font-family:"Hanken Grotesk";font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+  nav{margin-top:24px}
+  nav .grp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:20px 0 8px}
+  nav a{display:block;color:var(--ink-soft);font-size:14.5px;font-weight:500;padding:6px 11px;border-radius:8px;margin:1px 0;border-left:2px solid transparent}
+  nav a:hover{background:var(--card);text-decoration:none}
+  nav a.active{background:var(--card);color:var(--green);font-weight:600;border-left-color:var(--green)}
+
+  /* content */
+  .content{flex:1;min-width:0;padding:48px 56px 120px;max-width:780px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--green)}
+  h1{font-family:"Fraunces",serif;font-weight:500;font-size:40px;line-height:1.08;letter-spacing:-.01em;margin:.25em 0 .35em}
+  h2{font-family:"Fraunces",serif;font-weight:500;font-size:26px;letter-spacing:-.01em;margin:2.4em 0 .5em;padding-top:14px;scroll-margin-top:20px}
+  h3{font-size:17px;font-weight:700;margin:1.6em 0 .3em}
+  p{margin:.7em 0}
+  .lead{font-size:18.5px;color:var(--ink-soft)}
+  section{border-top:1px solid transparent}
+  section+section h2{border-top:1px solid var(--line)}
+  ul,ol{margin:.6em 0;padding-left:1.3em}
+  li{margin:.3em 0}
+  strong{font-weight:700}
+  code{background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.88em;font-family:ui-monospace,Menlo,monospace}
+  hr{border:0;border-top:1px solid var(--line);margin:2em 0}
+
+  .pill{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:20px;border:1px solid transparent;vertical-align:1px}
+  .pill.keep{background:var(--green-soft);color:var(--green);border-color:#cfe0cf}
+  .pill.review{background:var(--amber-soft);color:var(--amber);border-color:#e7d49b}
+  .pill.cut{background:var(--rust-soft);color:var(--rust);border-color:#e6c4ad;text-decoration:line-through}
+
+  .call{display:flex;gap:13px;padding:15px 17px;border-radius:12px;margin:1.3em 0;font-size:15px;line-height:1.55}
+  .call .ic{flex:none;font-size:20px;line-height:1.3}
+  .call.tip{background:var(--green-soft);border:1px solid #cfe0cf}
+  .call.warn{background:var(--rust-soft);border:1px solid #e6c4ad}
+  .call.note{background:var(--paper-2);border:1px solid var(--line)}
+  .call.key{background:var(--amber-soft);border:1px solid #e7d49b}
+  .call b{color:var(--ink)}
+
+  .steps{counter-reset:s;list-style:none;padding-left:0}
+  .steps li{position:relative;padding-left:42px;margin:.85em 0}
+  .steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:-1px;width:28px;height:28px;background:var(--green);color:#fff;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px}
+
+  .topbar{display:none;position:sticky;top:0;z-index:30;align-items:center;gap:12px;padding:12px 16px;background:rgba(247,242,233,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .menubtn{border:1px solid var(--line-strong);background:var(--card);border-radius:9px;width:40px;height:40px;font-size:18px;cursor:pointer;color:var(--ink)}
+  .topbar .tt{font-family:"Fraunces",serif;font-weight:500;font-size:17px}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(31,39,34,.4);z-index:39}
+
+  @media(max-width:860px){
+    .topbar{display:flex}
+    .sidebar{position:fixed;top:0;left:0;z-index:40;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(0,0,0,.18)}
+    .sidebar.open{transform:none}
+    .scrim.show{display:block}
+    .content{padding:26px 20px 100px}
+    h1{font-size:32px}
+    h2{font-size:23px}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="menubtn" id="menuBtn" aria-label="Menu">☰</button>
+  <span class="tt">The Household Ledger — Guide</span>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#3a6b4f"/><path d="M16 6.2 26 15.2 H6 Z" fill="#f4efe4"/><rect x="8.5" y="15" width="15" height="9.3" fill="#f4efe4"/><rect x="13.7" y="18.2" width="4.6" height="6.1" rx="0.6" fill="#3a6b4f"/><rect x="9.8" y="25.3" width="12.4" height="1.5" rx="0.75" fill="#a9802b"/></svg>
+      <div class="t">The <em>Household</em> Ledger<span>User Guide</span></div>
+    </div>
+    <nav id="nav">
+      <div class="grp">Getting started</div>
+      <a href="#welcome">Welcome</a>
+      <a href="#signin">Signing in</a>
+      <a href="#plan">The game plan</a>
+      <div class="grp">The tabs</div>
+      <a href="#overview">Overview &amp; income</a>
+      <a href="#bills">Bills</a>
+      <a href="#subs">Subscriptions</a>
+      <a href="#savings">Savings &amp; emergency fund</a>
+      <a href="#debt">Debt payoff</a>
+      <a href="#mortgage">Mortgage</a>
+      <div class="grp">Everyday</div>
+      <a href="#phone">Using it on your phone</a>
+      <a href="#faq">Questions &amp; fixes</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+
+    <section id="welcome">
+      <div class="eyebrow">Welcome</div>
+      <h1>One place for the family money</h1>
+      <p class="lead">This is our private money tracker. It keeps tabs on what comes in, what goes out, the subscriptions we forget about, our savings, and a real plan to get the debt gone — and it stays in sync on both our phones.</p>
+      <p>Nothing here is shared with anyone. It's just for the two of us. You can't break it — every number can be changed or deleted, and it saves itself the second you touch it.</p>
+      <div class="call tip"><span class="ic">🌱</span><div>The whole point is honesty, not perfection. A rough number entered today beats a perfect number you never get around to. Put something in, see the picture, adjust as you go.</div></div>
+    </section>
+
+    <section id="signin">
+      <h2>Signing in</h2>
+      <p>Open the app, type our shared <b>email and password</b> in the top corner, and tap <b>Sign in</b>. That's it — no codes, no email links.</p>
+      <p>When it works, the corner says <b>“Synced across devices.”</b> That green badge means whatever one of us changes shows up on the other's phone automatically.</p>
+      <div class="call note"><span class="ic">🔒</span><div>We each use the same login. It's safe — only our accounts can see the data, and it lives in our own private database, not on anyone's website.</div></div>
+    </section>
+
+    <section id="plan">
+      <h2>The game plan</h2>
+      <p>Money advice gets noisy. Here's the simple order this app is built around — do these in sequence and you almost can't go wrong:</p>
+      <ol class="steps">
+        <li><b>Plug the leaks.</b> Cancel subscriptions we don't use. Found money, instantly.</li>
+        <li><b>Build a small cushion.</b> Get the emergency fund to about <b>3 months of essentials</b> first. This is what makes a slow month or a surprise bill survivable.</li>
+        <li><b>Kill the expensive debt.</b> Throw every spare dollar at the highest-interest card or loan until it's gone, then the next.</li>
+        <li><b>Then everything else.</b> Bigger savings goals, more cushion, and only *last* extra payments on the house.</li>
+      </ol>
+      <div class="call key"><span class="ic">🏠</span><div><b>Don't rush the mortgage.</b> Ours is at a low 4.125% — it's the <i>cheapest</i> money we owe. Paying it off early feels good but it's the worst use of a spare dollar while any credit-card debt exists. The app will remind you of this too.</div></div>
+    </section>
+
+    <section id="overview">
+      <h2>Overview &amp; income</h2>
+      <p>This is the home screen — the big picture. The four cards at the very top (on every tab) show: <b>income</b>, <b>total saved</b>, <b>free each month</b>, and your <b>debt-free date</b>.</p>
+
+      <h3>Adding income</h3>
+      <p>Add each source of money that comes in monthly — a paycheck, the business draw, anything. For each one you pick:</p>
+      <ul>
+        <li><b>Steady</b> — same amount every month (like a salaried paycheck). Just enter the monthly take-home.</li>
+        <li><b>Variable</b> — it bounces around (like the HVAC business). Enter a <b>typical</b> month <i>and</i> a <b>lean month</b> — a realistically slow month.</li>
+      </ul>
+      <div class="call tip"><span class="ic">📉</span><div><b>The contractor rule.</b> When income is lumpy, budget against the <b>lean month</b>, not the good one. Cover the bills from the low number and treat anything extra in a good month as a bonus to throw at debt or savings. Use the <b>Lean / Typical</b> toggle on this tab to stress-test both.</div></div>
+
+      <h3>Where the money goes</h3>
+      <p>The colored bar shows your whole income split into where it lands: bills, subscriptions, debt minimums, savings, extra debt payments, and what's left. If there's money left over, you'll see a green <b>“free every month”</b> note with a button to send it straight at the debt.</p>
+      <div class="call note"><span class="ic">🟥</span><div>If "Free each month" is <b>red</b>, it just means spending is higher than the income you've entered — usually because income is still blank. Fill in income first; the red almost always turns green.</div></div>
+    </section>
+
+    <section id="bills">
+      <h2>Bills</h2>
+      <p>These are the fixed, must-pay expenses: mortgage, electric, water, insurance, phone, internet, groceries. Add each one with its amount and a category. The app totals them per month and per year, and breaks them down by category.</p>
+      <div class="call key"><span class="ic">🏠</span><div><b>The mortgage goes here once, as the full payment ($747.14).</b> That's the only place the house hits our budget. The separate "Mortgage" tab is just a calculator — it does <i>not</i> count against the budget, so we're not paying it twice on paper.</div></div>
+    </section>
+
+    <section id="subs">
+      <h2>Subscriptions</h2>
+      <p>All the recurring streaming/app charges. Each one shows its cost and when it charges next (turns red when it's within a week, so you can cancel before it hits).</p>
+      <p>Tap the little status tag to cycle it through three states:</p>
+      <p><span class="pill keep">Keep</span> &nbsp; we're using it &nbsp;→&nbsp; <span class="pill review">Review</span> &nbsp; on the fence &nbsp;→&nbsp; <span class="pill cut">Cut</span> &nbsp; cancel this</p>
+      <div class="call tip"><span class="ic">💸</span><div>Everything you mark <b>Cut</b> gets added up as "found money." Over on the <b>Debt Payoff</b> tab there's a button — <b>“Apply cut subs →”</b> — that throws all of it at the debt and instantly shows you how many months sooner we'd be free. Canceling one $12 thing actually moves the needle.</div></div>
+    </section>
+
+    <section id="savings">
+      <h2>Savings &amp; emergency fund</h2>
+      <p>Add a goal with a target amount, what's saved so far, and how much we put in monthly. Each one gets a progress bar and an estimate of when we'll hit it.</p>
+      <h3>The emergency fund</h3>
+      <p>Mark one goal as the <b>Emergency fund</b> and it gets special treatment: one-tap buttons set the target to <b>3 or 6 months of our essentials</b> (bills + minimum debt payments, figured automatically), and it shows how many months we're actually covered for.</p>
+      <div class="call tip"><span class="ic">🛟</span><div>For a one-truck business with up-and-down income, this is the most important number in the whole app. Aim for <b>3 months of essentials before</b> piling extra onto debt. That cushion is what turns a scary slow month into a non-event.</div></div>
+      <p>When money goes into a goal, use the <b>Add deposit</b> box on that goal to bump the saved amount — no need to delete and re-add anything.</p>
+    </section>
+
+    <section id="debt">
+      <h2>Debt payoff</h2>
+      <p>Add each card or loan with its <b>balance</b>, <b>interest rate (APR)</b>, and <b>minimum monthly payment</b>. <i>(Leave the mortgage out — it has its own tab.)</i> Then pick a strategy:</p>
+      <ul>
+        <li><b>Avalanche</b> — hits the <b>highest interest rate</b> first. Saves the most money overall. The mathematically best choice.</li>
+        <li><b>Snowball</b> — clears the <b>smallest balance</b> first. Costs a little more, but you knock out whole accounts faster, which feels great and keeps you going.</li>
+      </ul>
+      <p>Type any <b>extra</b> amount you can add each month and the app shows your <b>debt-free date</b>, total interest, and how much you save versus just paying minimums. Two shortcut buttons fill that extra for you:</p>
+      <ul>
+        <li><b>Apply cut subs →</b> — uses the subscriptions you marked Cut.</li>
+        <li><b>Apply free cash →</b> — uses your whole monthly surplus from the Overview.</li>
+      </ul>
+      <div class="call note"><span class="ic">⚖️</span><div>There's no wrong pick between Avalanche and Snowball — the best one is the one you'll actually stick with. If staying motivated is the hard part, Snowball. If you just want max savings, Avalanche.</div></div>
+    </section>
+
+    <section id="mortgage">
+      <h2>Mortgage</h2>
+      <p>This tab is a <b>calculator only</b> — it shows when the house gets paid off and how much interest is left. It does not touch the monthly budget.</p>
+      <div class="call warn"><span class="ic">📐</span><div><b>Enter the “P&amp;I” amount, not the full payment.</b> Our statement splits it: <b>$274.79</b> is principal &amp; interest (that's the number for this tab), and <b>$472.35</b> is escrow (taxes &amp; insurance, which don't pay down the loan). Putting the full $747 here makes the math wrong.</div></div>
+      <p>You can type an <b>extra principal</b> amount to see how much time and interest it would cut — but per the game plan, leave it at <b>0</b> until the cushion is built and the cards are gone.</p>
+    </section>
+
+    <section id="phone">
+      <h2>Using it on your phone</h2>
+      <p>It's built for phones — just open the link and sign in. To make it feel like a real app:</p>
+      <ul>
+        <li><b>iPhone:</b> open in Safari → Share button → <b>Add to Home Screen</b>. You'll get the little green house icon.</li>
+        <li><b>Android:</b> open in Chrome → menu (⋮) → <b>Add to Home screen</b>.</li>
+      </ul>
+      <p>The tabs scroll sideways with a swipe on a small screen, and everything stacks to fit. Whatever one of us edits shows up on the other's phone within a second or two.</p>
+    </section>
+
+    <section id="faq">
+      <h2>Questions &amp; fixes</h2>
+
+      <h3>It says “Wrong email or password.”</h3>
+      <p>Double-check the spelling and that caps lock is off. The email and password have to match exactly what we set up.</p>
+
+      <h3>I changed something but it didn't show on the other phone.</h3>
+      <p>Give it a few seconds, then pull-to-refresh. If a phone was asleep, it catches up when you reopen the app.</p>
+
+      <h3>“Free each month” is red — did we mess up?</h3>
+      <p>No. It's just income minus everything we spend, and it goes red if spending is higher than the income entered. Make sure all income sources are in (and try the Typical view). It's meant to be an honest gut-check, not an alarm.</p>
+
+      <h3>Can I just play with numbers without breaking anything?</h3>
+      <p>Yes — change anything you want. Nothing is permanent, the mortgage tab is only a what-if calculator, and you can always delete an entry with the ✕.</p>
+
+      <hr>
+      <p style="color:var(--faint);font-size:14px">Built for the Estes household. Private, ad-free, and ours.</p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // mobile drawer
+  const sb=document.getElementById('sidebar'), scrim=document.getElementById('scrim'), mb=document.getElementById('menuBtn');
+  function close(){ sb.classList.remove('open'); scrim.classList.remove('show'); }
+  mb.onclick=()=>{ sb.classList.add('open'); scrim.classList.add('show'); };
+  scrim.onclick=close;
+  document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>{ if(window.innerWidth<=860) close(); }));
+
+  // active-section highlight
+  const links=[...document.querySelectorAll('#nav a')];
+  const map={}; links.forEach(a=>map[a.getAttribute('href').slice(1)]=a);
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        const a=map[e.target.id]; if(a) a.classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -75% 0px',threshold:0});
+  document.querySelectorAll('main section').forEach(s=>io.observe(s));
+</script>
+</body>
+</html>
