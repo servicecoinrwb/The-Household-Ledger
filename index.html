@@ -372,6 +372,7 @@ let state = {
     {id:uid(), name:'Google One',    cost:1.99,  cycle:'monthly', renew:'2026-06-30', owner:'Brian', status:'keep'},
   ],
   debts: [],
+  mortgage: {bal:'',apr:'',pay:'',extra:''},
   settings: {strategy:'avalanche', extra:0, incomeView:'lean'}
 };
 
@@ -382,6 +383,7 @@ function mergeDefaults(s){
   m.subscriptions=(m.subscriptions||[]).map(x=>({...x,owner:own(x.owner)}));
   m.bills=m.bills||[]; m.savings=m.savings||[]; m.debts=m.debts||[];
   m.settings=Object.assign({strategy:'avalanche',extra:0,incomeView:'lean'}, m.settings||{});
+  m.mortgage=Object.assign({bal:'',apr:'',pay:'',extra:''}, m.mortgage||{});
   return m;
 }
 
@@ -396,7 +398,7 @@ async function initBackend(){
       sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
       const { data:{ session } } = await sb.auth.getSession();
       sbUser = session?.user || null;
-      sb.auth.onAuthStateChange(async (_e, s)=>{ sbUser=s?.user||null; updateAuthUI(); if(sbReady()){ await loadFromBackend(); subscribeRealtime(); renderAll(); renderMortgage(); } });
+      sb.auth.onAuthStateChange(async (_e, s)=>{ sbUser=s?.user||null; updateAuthUI(); if(sbReady()){ await loadFromBackend(); subscribeRealtime(); renderAll(); hydrateMortgage(); } });
     }catch(e){ sb=null; sbUser=null; }
   }
   updateAuthUI();
@@ -446,7 +448,7 @@ function subscribeRealtime(){
       .on('postgres_changes',{event:'*',schema:'public',table:'household_finance',filter:'id=eq.'+CONFIG.HOUSEHOLD_ID}, payload=>{
         const row=payload.new; if(!row||!row.data) return;
         if(suppressRealtime || row.updated_by===sbUser.email) return;
-        state=mergeDefaults(row.data); renderAll(); renderMortgage(); flashSave('Updated from another device');
+        state=mergeDefaults(row.data); renderAll(); hydrateMortgage(); flashSave('Updated from another device');
       }).subscribe();
   }catch(e){}
 }
@@ -759,9 +761,26 @@ document.getElementById('applyCut').onclick=()=>{ const c=cutMonthly(); if(c<=0)
 document.getElementById('applyFree').onclick=()=>{ const f=freeCash(); if(f<=0)return alert('No free cash right now — add income or trim bills/subscriptions/savings first.'); state.settings.extra=Math.round((state.settings.extra+f)*100)/100; save(); renderAll(); };
 
 /* mortgage */
-['m_bal','m_apr','m_pay','m_extra'].forEach(id=>document.getElementById(id).addEventListener('input',renderMortgage));
+function hydrateMortgage(){
+  const m=state.mortgage||{};
+  document.getElementById('m_bal').value   = m.bal ?? '';
+  document.getElementById('m_apr').value   = m.apr ?? '';
+  document.getElementById('m_pay').value   = m.pay ?? '';
+  document.getElementById('m_extra').value = m.extra ?? '';
+  renderMortgage();
+}
+function mortgageInput(){
+  state.mortgage = {
+    bal:   document.getElementById('m_bal').value,
+    apr:   document.getElementById('m_apr').value,
+    pay:   document.getElementById('m_pay').value,
+    extra: document.getElementById('m_extra').value
+  };
+  save(); renderMortgage();
+}
+['m_bal','m_apr','m_pay','m_extra'].forEach(id=>document.getElementById(id).addEventListener('input',mortgageInput));
 
-(async()=>{ await initBackend(); await load(); renderAll(); renderMortgage(); if(sbReady()) subscribeRealtime(); })();
+(async()=>{ await initBackend(); await load(); renderAll(); hydrateMortgage(); if(sbReady()) subscribeRealtime(); })();
 </script>
 </body>
 </html>
