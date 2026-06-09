@@ -150,6 +150,35 @@
   .goal-actions input{width:110px}
   .ef-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 
+  /* streaming */
+  .srow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .nm{font-weight:600;flex:1}
+  .srow .pr{font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+  .srow.off .nm,.srow.off .pr{color:var(--faint);text-decoration:line-through}
+  .tog{flex:none;width:52px;height:28px;border-radius:20px;border:1px solid var(--line-strong);background:var(--paper-2);position:relative;cursor:pointer;transition:.18s}
+  .tog::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.18s}
+  .tog.on{background:var(--green);border-color:var(--green)}
+  .tog.on::after{left:26px}
+  .chiprow{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:13px;font-weight:600;padding:6px 12px;border-radius:20px;border:1px solid var(--line-strong);background:var(--card);color:var(--ink-soft);cursor:pointer;user-select:none}
+  .chip.sel{background:var(--green);color:#fff;border-color:var(--green)}
+  .chip.empty{color:var(--faint);border-style:dashed;cursor:default}
+  .bcard{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;background:var(--card)}
+  .bcard.active{border-color:#cfe0cf;background:linear-gradient(180deg,#f0f7f5,var(--card))}
+  .bcard .bn{font-weight:700}
+  .bcard .bm{font-size:12.5px;color:var(--faint)}
+  .bcard .bp{font-weight:700;font-variant-numeric:tabular-nums}
+  .badge-on{font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid #cfe0cf;padding:2px 8px;border-radius:20px}
+  .badge-off{font-size:11px;font-weight:600;color:var(--faint);background:var(--paper-2);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .scard2{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;background:var(--card)}
+  .scard2 .sn{font-weight:700;flex:1;min-width:120px}
+  .scard2 .sp{font-family:"Fraunces",serif;font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}
+  .bigtotal{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px;border-radius:12px;background:var(--paper-2);border:1px solid var(--line);margin-top:6px}
+  .bigtotal .v{font-family:"Fraunces",serif;font-size:30px;font-weight:500;font-variant-numeric:tabular-nums}
+  .bigtotal.over{background:var(--rust-soft);border-color:#e6c4ad}
+  .bigtotal.under{background:var(--green-soft);border-color:#cfe0cf}
+
   footer{text-align:center;color:var(--faint);font-size:12px;margin-top:30px}
 
   .authbtn{font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;transition:.15s}
@@ -197,6 +226,7 @@
   <div class="tabs">
     <button data-tab="overview" class="active">Overview</button>
     <button data-tab="subs">Subscriptions</button>
+    <button data-tab="streaming">Streaming</button>
     <button data-tab="bills">Bills</button>
     <button data-tab="savings">Savings</button>
     <button data-tab="debt">Debt Payoff</button>
@@ -251,6 +281,48 @@
           <button class="btn primary" id="s_add">Add</button>
         </div>
         <div id="subInsights"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STREAMING -->
+  <section class="panel" id="panel-streaming">
+    <div class="block">
+      <div class="head"><h2>Streaming strategy</h2><div class="meta" id="streamMeta"></div></div>
+      <div class="body">
+        <div class="extrabox" style="margin-top:8px">
+          <span class="label">Monthly streaming budget</span>
+          <span class="money">$</span><input id="streamBudget" type="number" step="1" value="0" style="width:110px">
+          <span class="label" id="streamBudgetNote" style="margin-left:4px"></span>
+        </div>
+        <div id="streamTotalBox"></div>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:20px 0 4px">Services — tap to toggle on/off</h3>
+        <div id="streamList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:150px"><label>Service</label><input id="sv_name" placeholder="YouTube TV, Disney+, Hulu…"></div>
+          <div class="fld" style="width:120px"><label>Price / mo</label><input id="sv_price" type="number" step="0.01" placeholder="0.00"></div>
+          <button class="btn primary" id="sv_add">Add</button>
+        </div>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:24px 0 4px">Bundles — special combined price when all members are on</h3>
+        <div id="bundleList"></div>
+        <div class="addbar" style="flex-direction:column;align-items:stretch">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div class="fld" style="flex:2;min-width:150px"><label>Bundle name</label><input id="bn_name" placeholder="Disney+ / Hulu / ESPN"></div>
+            <div class="fld" style="width:120px"><label>Bundle price / mo</label><input id="bn_price" type="number" step="0.01" placeholder="0.00"></div>
+          </div>
+          <div class="fld"><label>Which services are in it?</label><div id="bn_members" class="chiprow"></div></div>
+          <button class="btn primary" id="bn_add" style="align-self:flex-start">Add bundle</button>
+        </div>
+
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:24px 0 4px">Saved scenarios — compare combos</h3>
+        <div id="scenarioList"></div>
+        <div class="addbar">
+          <div class="fld" style="flex:2;min-width:150px"><label>Save current combo as</label><input id="sc_name" placeholder="Football season, Summer cutback…"></div>
+          <button class="btn green" id="sc_add">Save scenario</button>
+        </div>
+        <div id="streamInsights"></div>
       </div>
     </div>
   </section>
@@ -373,6 +445,7 @@ let state = {
   ],
   debts: [],
   mortgage: {bal:'',apr:'',pay:'',extra:''},
+  streaming: {services:[], bundles:[], scenarios:[], budget:0},
   settings: {strategy:'avalanche', extra:0, incomeView:'lean'}
 };
 
@@ -384,6 +457,8 @@ function mergeDefaults(s){
   m.bills=m.bills||[]; m.savings=m.savings||[]; m.debts=m.debts||[];
   m.settings=Object.assign({strategy:'avalanche',extra:0,incomeView:'lean'}, m.settings||{});
   m.mortgage=Object.assign({bal:'',apr:'',pay:'',extra:''}, m.mortgage||{});
+  m.streaming=Object.assign({services:[],bundles:[],scenarios:[],budget:0}, m.streaming||{});
+  m.streaming.services=m.streaming.services||[]; m.streaming.bundles=m.streaming.bundles||[]; m.streaming.scenarios=m.streaming.scenarios||[];
   return m;
 }
 
@@ -696,7 +771,106 @@ function renderMortgage(){
   </div>${ex>0?'':'<div class="insight" style="margin-top:14px"><span class="ic">🏁</span><div>Add an <b>extra principal</b> amount to see how much interest and time you cut. But fund the emergency cushion and torch high-APR cards first — they almost always beat prepaying a mortgage.</div></div>'}`;
 }
 
-function renderAll(){ renderSummary(); renderIncome(); renderCashflow(); renderSubs(); renderBills(); renderSavings(); renderDebts(); }
+/* ---------- streaming strategy ---------- */
+let bnDraft = new Set();
+function streamServicePrice(id){ const s=state.streaming.services.find(x=>x.id===id); return s?+s.price||0:0; }
+function streamTotalFor(onIds){
+  const on=new Set(onIds); let total=0; const covered=new Set();
+  (state.streaming.bundles||[]).forEach(b=>{
+    const mem=b.memberIds||[];
+    if(mem.length && mem.every(id=>on.has(id)) && mem.every(id=>!covered.has(id))){ total+=+b.price||0; mem.forEach(id=>covered.add(id)); }
+  });
+  state.streaming.services.forEach(s=>{ if(on.has(s.id) && !covered.has(s.id)) total+=+s.price||0; });
+  return total;
+}
+const currentOnIds = ()=> state.streaming.services.filter(s=>s.on).map(s=>s.id);
+function activeBundleIds(){ const on=new Set(currentOnIds()); return new Set((state.streaming.bundles||[]).filter(b=>(b.memberIds||[]).length && b.memberIds.every(id=>on.has(id))).map(b=>b.id)); }
+
+function renderStreaming(){
+  const S=state.streaming;
+  document.getElementById('streamBudget').value = S.budget||0;
+  const list=document.getElementById('streamList');
+  list.innerHTML = S.services.length ? S.services.map(s=>`
+    <div class="srow ${s.on?'':'off'}" data-id="${s.id}">
+      <div class="tog ${s.on?'on':''}" data-act="svtog" data-id="${s.id}" role="button" aria-label="toggle"></div>
+      <div class="nm">${esc(s.name)}</div>
+      <div class="pr money">${fmt.format(+s.price)}/mo</div>
+      <button class="iconbtn del" data-act="svdel" data-id="${s.id}">✕</button>
+    </div>`).join('') : `<div class="empty">No services yet. Add YouTube TV, Disney+, etc. below.</div>`;
+  const total=streamTotalFor(currentOnIds()); const budget=+S.budget||0; const onCount=currentOnIds().length;
+  const cls = budget>0 ? (total>budget?'over':'under') : '';
+  document.getElementById('streamTotalBox').innerHTML = `<div class="bigtotal ${cls}">
+    <div><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:600">Current combo (${onCount} on)</div><div class="v">${fmt.format(total)}<span style="font-size:14px;color:var(--ink-soft)"> /mo · ${fmt0.format(total*12)}/yr</span></div></div>
+    ${budget>0?`<div style="text-align:right"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:600">vs budget ${fmt0.format(budget)}</div><div style="font-weight:700;color:${total>budget?'var(--rust)':'var(--green)'}">${total>budget?fmt.format(total-budget)+' over':fmt.format(budget-total)+' to spare'}</div></div>`:''}
+  </div>`;
+  document.getElementById('streamMeta').textContent = S.services.length?`${fmt.format(total)}/mo`:'';
+  renderBundles(); renderBundleMemberChips(); renderScenarios();
+}
+function renderBundles(){
+  const S=state.streaming; const act=activeBundleIds();
+  document.getElementById('bundleList').innerHTML = S.bundles.length ? S.bundles.map(b=>{
+    const names=(b.memberIds||[]).map(id=>{const s=S.services.find(x=>x.id===id);return s?esc(s.name):'?';}).join(' + ');
+    const indiv=(b.memberIds||[]).reduce((a,id)=>a+streamServicePrice(id),0); const sv=indiv-(+b.price||0); const on=act.has(b.id);
+    return `<div class="bcard ${on?'active':''}" data-id="${b.id}">
+      <span class="${on?'badge-on':'badge-off'}">${on?'Active':'Inactive'}</span>
+      <div style="flex:1;min-width:140px"><div class="bn">${esc(b.name)}</div><div class="bm">${names||'no services'}${sv>0?' · saves '+fmt.format(sv)+'/mo vs separate':''}</div></div>
+      <div class="bp money">${fmt.format(+b.price)}/mo</div>
+      <button class="iconbtn del" data-act="bndel" data-id="${b.id}">✕</button>
+    </div>`;
+  }).join('') : `<div class="empty" style="padding:14px">No bundles. Add one if a combo (like Disney+/Hulu/ESPN) has a special price.</div>`;
+}
+function renderBundleMemberChips(){
+  const wrap=document.getElementById('bn_members'); const S=state.streaming;
+  wrap.innerHTML = S.services.length ? S.services.map(s=>`<span class="chip ${bnDraft.has(s.id)?'sel':''}" data-act="bnchip" data-id="${s.id}">${esc(s.name)}</span>`).join('') : '<span class="chip empty">add services first</span>';
+}
+function renderScenarios(){
+  const S=state.streaming; const curr=streamTotalFor(currentOnIds());
+  document.getElementById('scenarioList').innerHTML = S.scenarios.length ? S.scenarios.map(sc=>{
+    const t=streamTotalFor(sc.onIds||[]);
+    return `<div class="scard2" data-id="${sc.id}">
+      <div class="sn">${esc(sc.name)}<div style="font-weight:500;color:var(--faint);font-size:12px">${(sc.onIds||[]).length} service${(sc.onIds||[]).length===1?'':'s'} · ${fmt0.format(t*12)}/yr</div></div>
+      <div class="sp money">${fmt.format(t)}<span style="font-size:12px;color:var(--ink-soft)">/mo</span></div>
+      <button class="btn tint sm" data-act="scload" data-id="${sc.id}">Load</button>
+      <button class="iconbtn del" data-act="scdel" data-id="${sc.id}">✕</button>
+    </div>`;
+  }).join('') : `<div class="empty" style="padding:14px">No saved scenarios yet. Toggle services, then save the combo to compare.</div>`;
+}
+document.getElementById('streamBudget').addEventListener('input',e=>{ state.streaming.budget=Math.max(0,parseFloat(e.target.value)||0); save(); renderStreaming(); });
+document.getElementById('sv_add').onclick=()=>{
+  const name=document.getElementById('sv_name').value.trim(); const price=parseFloat(document.getElementById('sv_price').value);
+  if(!name||isNaN(price))return document.getElementById('sv_name').focus();
+  state.streaming.services.push({id:uid(),name,price:+price.toFixed(2),on:true});
+  document.getElementById('sv_name').value='';document.getElementById('sv_price').value=''; save(); renderStreaming();
+};
+document.getElementById('streamList').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t)return; const id=t.dataset.id;
+  if(t.dataset.act==='svtog'){ const s=state.streaming.services.find(x=>x.id===id); s.on=!s.on; }
+  if(t.dataset.act==='svdel'){ state.streaming.services=state.streaming.services.filter(x=>x.id!==id);
+    state.streaming.bundles.forEach(b=>b.memberIds=(b.memberIds||[]).filter(m=>m!==id));
+    state.streaming.scenarios.forEach(sc=>sc.onIds=(sc.onIds||[]).filter(m=>m!==id)); bnDraft.delete(id); }
+  save(); renderStreaming();
+});
+document.getElementById('bn_members').addEventListener('click',e=>{ const t=e.target.closest('[data-act="bnchip"]'); if(!t)return; const id=t.dataset.id; bnDraft.has(id)?bnDraft.delete(id):bnDraft.add(id); renderBundleMemberChips(); });
+document.getElementById('bn_add').onclick=()=>{
+  const name=document.getElementById('bn_name').value.trim(); const price=parseFloat(document.getElementById('bn_price').value);
+  if(!name||isNaN(price))return document.getElementById('bn_name').focus();
+  if(bnDraft.size<2)return alert('Pick at least two services for the bundle (tap the chips).');
+  state.streaming.bundles.push({id:uid(),name,price:+price.toFixed(2),memberIds:[...bnDraft]});
+  document.getElementById('bn_name').value='';document.getElementById('bn_price').value=''; bnDraft=new Set(); save(); renderStreaming();
+};
+document.getElementById('bundleList').addEventListener('click',e=>{const t=e.target.closest('[data-act="bndel"]');if(!t)return;state.streaming.bundles=state.streaming.bundles.filter(b=>b.id!==t.dataset.id);save();renderStreaming();});
+document.getElementById('sc_add').onclick=()=>{
+  const name=document.getElementById('sc_name').value.trim(); if(!name)return document.getElementById('sc_name').focus();
+  state.streaming.scenarios.push({id:uid(),name,onIds:currentOnIds()}); document.getElementById('sc_name').value=''; save(); renderStreaming();
+};
+document.getElementById('scenarioList').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t)return; const id=t.dataset.id;
+  if(t.dataset.act==='scdel') state.streaming.scenarios=state.streaming.scenarios.filter(s=>s.id!==id);
+  if(t.dataset.act==='scload'){ const sc=state.streaming.scenarios.find(s=>s.id===id); const on=new Set(sc.onIds||[]); state.streaming.services.forEach(s=>s.on=on.has(s.id)); }
+  save(); renderStreaming();
+});
+
+function renderAll(){ renderSummary(); renderIncome(); renderCashflow(); renderSubs(); renderStreaming(); renderBills(); renderSavings(); renderDebts(); }
 function switchTab(name){ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===name)); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active'); }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 document.querySelectorAll('#viewSeg button').forEach(b=>b.onclick=()=>{ state.settings.incomeView=b.dataset.view; save(); renderSummary(); renderCashflow(); });
